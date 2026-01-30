@@ -14,6 +14,9 @@ class FNAFWorld {
         this.rooms = {};
         this.lights = {};
         this.doorways = [];
+        this.lightSwitches = []; // Light switches in current room
+        this.roomLights = []; // Lights that can be toggled
+        this.lightsOn = true; // Current room light state
         this.clock = new THREE.Clock();
 
         // Enhanced camera controls
@@ -42,6 +45,12 @@ class FNAFWorld {
         this.footstepTimer = 0;
         this.isMoving = false;
         this.isTransitioning = false; // Prevent rapid door transitions
+        this.isHiding = false; // For survival mode
+
+        // Survival mode
+        this.survivalMode = null;
+        this.flashlight = null;
+        this.flashlightHelper = null;
 
         // Room definitions with connections and doorway positions
         this.roomData = {
@@ -344,6 +353,22 @@ class FNAFWorld {
                 e.preventDefault();
             }
             if (key === 'shift') this.isRunning = true;
+
+            // E key for light switch interaction
+            if (key === 'e' || key === 'f') {
+                this.tryToggleLightSwitch();
+            }
+
+            // Survival mode controls
+            if (key === 'c') {
+                this.toggleHide(); // Crouch/hide
+            }
+            if (key === 'g') {
+                // Toggle flashlight
+                if (this.survivalMode && this.survivalMode.isActive) {
+                    this.survivalMode.toggleFlashlight();
+                }
+            }
         });
 
         // Keyboard up
@@ -433,6 +458,9 @@ class FNAFWorld {
 
         // Add room-specific lighting
         this.addRoomLighting(roomId, data);
+
+        // Add light switches to room
+        this.addLightSwitches(data);
 
         // Add props based on room
         this.addRoomProps(roomId, data);
@@ -695,8 +723,10 @@ class FNAFWorld {
         mainLight.castShadow = true;
         mainLight.shadow.mapSize.width = 512;
         mainLight.shadow.mapSize.height = 512;
+        mainLight.baseIntensity = 1.2; // Store base intensity for toggle
         this.scene.add(mainLight);
         this.lights.main = mainLight;
+        this.roomLights.push(mainLight);
 
         // Additional ceiling lights spread across room
         const numLightsX = Math.ceil(width / 8);
@@ -709,14 +739,18 @@ class FNAFWorld {
                     height - 0.8,
                     -depth / 2 + (j + 0.5) * (depth / numLightsZ)
                 );
+                extraLight.baseIntensity = 0.6; // Store base intensity
                 this.scene.add(extraLight);
+                this.roomLights.push(extraLight);
 
-                // Visible light fixture
+                // Visible light fixture (stored for toggle effect)
                 const fixtureMat = new THREE.MeshBasicMaterial({ color: 0xffffaa });
                 const fixtureGeo = new THREE.BoxGeometry(0.6, 0.1, 0.3);
                 const fixture = new THREE.Mesh(fixtureGeo, fixtureMat);
                 fixture.position.copy(extraLight.position);
                 fixture.position.y = height - 0.05;
+                fixture.userData.isLightFixture = true;
+                fixture.userData.linkedLight = extraLight;
                 this.scene.add(fixture);
             }
         }
@@ -793,6 +827,198 @@ class FNAFWorld {
                 this.scene.add(doorLight);
             });
         }
+    }
+
+    addLightSwitches(data) {
+        const { width, depth, height } = data.size;
+
+        // Determine switch positions based on room layout
+        // Place switches near doorways on walls
+        const switchPositions = [];
+
+        // Add a main switch near entrance (usually back of room)
+        switchPositions.push({
+            x: width / 2 - 0.1,
+            y: 1.3,
+            z: depth / 4,
+            rotation: -Math.PI / 2 // Facing into room
+        });
+
+        // Add secondary switch on opposite wall for larger rooms
+        if (width > 8 || depth > 10) {
+            switchPositions.push({
+                x: -width / 2 + 0.1,
+                y: 1.3,
+                z: -depth / 4,
+                rotation: Math.PI / 2
+            });
+        }
+
+        switchPositions.forEach((pos, index) => {
+            const switchGroup = new THREE.Group();
+
+            // Switch plate (wall mount)
+            const plateMat = new THREE.MeshStandardMaterial({
+                color: 0xcccccc,
+                roughness: 0.3,
+                metalness: 0.1
+            });
+            const plateGeo = new THREE.BoxGeometry(0.12, 0.18, 0.02);
+            const plate = new THREE.Mesh(plateGeo, plateMat);
+            switchGroup.add(plate);
+
+            // Switch toggle (the actual switch)
+            const toggleMat = new THREE.MeshStandardMaterial({
+                color: 0x444444,
+                roughness: 0.4,
+                metalness: 0.3
+            });
+            const toggleGeo = new THREE.BoxGeometry(0.04, 0.08, 0.03);
+            const toggle = new THREE.Mesh(toggleGeo, toggleMat);
+            toggle.position.z = 0.02;
+            toggle.position.y = 0.02; // Up position (lights on)
+            toggle.rotation.x = -0.3; // Tilted up
+            toggle.name = 'toggle';
+            switchGroup.add(toggle);
+
+            // Small indicator light on switch
+            const indicatorMat = new THREE.MeshBasicMaterial({ color: 0x00ff00 });
+            const indicatorGeo = new THREE.CircleGeometry(0.01, 8);
+            const indicator = new THREE.Mesh(indicatorGeo, indicatorMat);
+            indicator.position.set(0, -0.06, 0.02);
+            indicator.name = 'indicator';
+            switchGroup.add(indicator);
+
+            // Position the switch group
+            switchGroup.position.set(pos.x, pos.y, pos.z);
+            switchGroup.rotation.y = pos.rotation;
+
+            this.scene.add(switchGroup);
+
+            // Store switch info for interaction
+            this.lightSwitches.push({
+                group: switchGroup,
+                position: new THREE.Vector3(pos.x, pos.y, pos.z),
+                toggle: toggle,
+                indicator: indicator,
+                isOn: true
+            });
+        });
+    }
+
+    tryToggleLightSwitch() {
+        if (!this.camera || this.lightSwitches.length === 0) return;
+
+        const playerPos = this.camera.position;
+        const interactDistance = 2.5;
+
+        for (const switchObj of this.lightSwitches) {
+            const dist = playerPos.distanceTo(switchObj.position);
+
+            if (dist < interactDistance) {
+                this.toggleRoomLights(switchObj);
+                return;
+            }
+        }
+    }
+
+    toggleRoomLights(switchObj) {
+        this.lightsOn = !this.lightsOn;
+
+        // Play switch sound
+        if (typeof playSound === 'function') {
+            playSound('switch');
+        }
+
+        // Update all switches in room to match state
+        this.lightSwitches.forEach(sw => {
+            sw.isOn = this.lightsOn;
+
+            // Animate toggle position
+            if (sw.toggle) {
+                sw.toggle.position.y = this.lightsOn ? 0.02 : -0.02;
+                sw.toggle.rotation.x = this.lightsOn ? -0.3 : 0.3;
+            }
+
+            // Update indicator color
+            if (sw.indicator) {
+                sw.indicator.material.color.setHex(this.lightsOn ? 0x00ff00 : 0xff0000);
+            }
+        });
+
+        // Toggle room lights intensity
+        const targetIntensity = this.lightsOn ? 1.0 : 0.05;
+        const ambientTarget = this.lightsOn ? 0.8 : 0.1;
+
+        this.roomLights.forEach(light => {
+            // Animate light transition
+            const startIntensity = light.intensity;
+            const startTime = Date.now();
+            const duration = 200;
+
+            const animateLight = () => {
+                const elapsed = Date.now() - startTime;
+                const progress = Math.min(elapsed / duration, 1);
+
+                light.intensity = startIntensity + (light.baseIntensity * targetIntensity - startIntensity) * progress;
+
+                if (progress < 1) {
+                    requestAnimationFrame(animateLight);
+                }
+            };
+            animateLight();
+        });
+
+        // Update ambient light and light fixtures
+        this.scene.children.forEach(child => {
+            if (child instanceof THREE.AmbientLight) {
+                child.intensity = ambientTarget;
+            }
+            // Update fixture visual appearance
+            if (child.userData && child.userData.isLightFixture) {
+                child.material.color.setHex(this.lightsOn ? 0xffffaa : 0x333333);
+            }
+        });
+
+        // Show feedback message
+        this.showLightSwitchHint(this.lightsOn ? '💡 Lichten AAN' : '🌑 Lichten UIT');
+    }
+
+    showLightSwitchHint(message) {
+        const hintEl = document.getElementById('door-hint-3d');
+        if (hintEl) {
+            hintEl.textContent = message;
+            hintEl.classList.add('visible');
+
+            setTimeout(() => {
+                hintEl.classList.remove('visible');
+            }, 1500);
+        }
+    }
+
+    checkLightSwitchProximity() {
+        if (!this.camera || this.lightSwitches.length === 0) return;
+
+        const playerPos = this.camera.position;
+        const interactDistance = 2.5;
+        let nearSwitch = false;
+
+        for (const switchObj of this.lightSwitches) {
+            const dist = playerPos.distanceTo(switchObj.position);
+
+            if (dist < interactDistance) {
+                nearSwitch = true;
+                // Show interact hint
+                const hintEl = document.getElementById('door-hint-3d');
+                if (hintEl && !hintEl.textContent.includes('Druk')) {
+                    hintEl.textContent = '💡 Druk E/F voor lichtschakelaar';
+                    hintEl.classList.add('visible');
+                }
+                break;
+            }
+        }
+
+        return nearSwitch;
     }
 
     startLightFlicker() {
@@ -1590,6 +1816,9 @@ class FNAFWorld {
 
     clearRoom() {
         this.doorways = [];
+        this.lightSwitches = [];
+        this.roomLights = [];
+        this.lightsOn = true;
         this.animatronics3D = {};
 
         if (!this.scene) return;
@@ -1807,8 +2036,28 @@ class FNAFWorld {
         // Check doorway collision
         this.checkDoorwayCollision();
 
+        // Check light switch proximity (only if not showing door hint)
+        const nearDoor = this.doorways.some(d => {
+            const distX = Math.abs(this.camera.position.x - d.position.x);
+            const distZ = Math.abs(this.camera.position.z - d.position.z);
+            return distX < 3.0 && distZ < 3.0;
+        });
+        if (!nearDoor) {
+            this.checkLightSwitchProximity();
+        }
+
         // Animate animatronics
         this.animateAnimatronics(delta);
+
+        // Update survival mode AI
+        if (this.survivalMode && this.survivalMode.isActive) {
+            this.survivalMode.update(delta);
+        }
+
+        // Update flashlight position
+        if (this.flashlightHelper) {
+            this.flashlightHelper();
+        }
     }
 
     animate() {
@@ -1867,10 +2116,745 @@ class FNAFWorld {
         this.camera = null;
         this.renderer = null;
     }
+
+    // ==========================================
+    // SURVIVAL MODE INTEGRATION
+    // ==========================================
+
+    startSurvivalMode(difficulty = 1) {
+        if (!this.survivalMode) {
+            this.survivalMode = new SurvivalMode(this);
+        }
+        this.survivalMode.start(difficulty);
+        this.createSurvivalHUD();
+    }
+
+    stopSurvivalMode() {
+        if (this.survivalMode) {
+            this.survivalMode.stop();
+        }
+        this.removeSurvivalHUD();
+    }
+
+    createSurvivalHUD() {
+        // Create survival HUD overlay
+        let hud = document.getElementById('survival-hud');
+        if (!hud) {
+            hud = document.createElement('div');
+            hud.id = 'survival-hud';
+            hud.className = 'survival-hud';
+            document.getElementById('freeroam-3d-hud')?.appendChild(hud);
+        }
+
+        // Create warning display
+        let warning = document.getElementById('survival-warning');
+        if (!warning) {
+            warning = document.createElement('div');
+            warning.id = 'survival-warning';
+            warning.className = 'survival-warning hidden';
+            document.getElementById('freeroam-3d-hud')?.appendChild(warning);
+        }
+
+        // Create audio cue display
+        let audioCue = document.getElementById('audio-cue');
+        if (!audioCue) {
+            audioCue = document.createElement('div');
+            audioCue.id = 'audio-cue';
+            audioCue.className = 'audio-cue hidden';
+            document.getElementById('freeroam-3d-hud')?.appendChild(audioCue);
+        }
+    }
+
+    removeSurvivalHUD() {
+        document.getElementById('survival-hud')?.remove();
+        document.getElementById('survival-warning')?.remove();
+        document.getElementById('audio-cue')?.remove();
+    }
+
+    showWarning(message) {
+        const warning = document.getElementById('survival-warning');
+        if (warning) {
+            warning.textContent = message;
+            warning.classList.remove('hidden');
+            setTimeout(() => warning.classList.add('hidden'), 3000);
+        }
+    }
+
+    showAudioCue(emoji) {
+        const cue = document.getElementById('audio-cue');
+        if (cue) {
+            cue.textContent = `🔊 ${emoji}`;
+            cue.classList.remove('hidden');
+            cue.style.animation = 'none';
+            cue.offsetHeight; // Trigger reflow
+            cue.style.animation = 'audioPulse 1s ease-out';
+            setTimeout(() => cue.classList.add('hidden'), 1500);
+        }
+    }
+
+    enableFlashlight() {
+        if (this.flashlight) return;
+
+        // Create spotlight for flashlight
+        this.flashlight = new THREE.SpotLight(0xffffee, 2, 15, Math.PI / 6, 0.5);
+        this.flashlight.position.copy(this.camera.position);
+        this.scene.add(this.flashlight);
+        this.scene.add(this.flashlight.target);
+
+        // Update flashlight in animation loop
+        this.flashlightHelper = () => {
+            if (this.flashlight && this.camera) {
+                this.flashlight.position.copy(this.camera.position);
+                const direction = new THREE.Vector3(0, 0, -1);
+                direction.applyQuaternion(this.camera.quaternion);
+                this.flashlight.target.position.copy(this.camera.position).add(direction.multiplyScalar(10));
+            }
+        };
+    }
+
+    disableFlashlight() {
+        if (this.flashlight) {
+            this.scene.remove(this.flashlight);
+            this.scene.remove(this.flashlight.target);
+            this.flashlight = null;
+            this.flashlightHelper = null;
+        }
+    }
+
+    respawnPlayer() {
+        // Teleport player to office (safe room)
+        this.buildRoom('office');
+        this.camera.position.set(0, this.playerHeight, 2);
+        this.showWarning('🏃 Je bent ontsnapt naar het kantoor!');
+    }
+
+    triggerJumpscare(animatronicAI) {
+        // Freeze player
+        this.isActive = false;
+
+        // Show jumpscare screen
+        const jumpscareEl = document.getElementById('jumpscare-screen');
+        const jumpscareAnim = document.getElementById('jumpscare-animatronic');
+        const freeRoamScreen = document.getElementById('freeroam-screen');
+
+        if (jumpscareEl && jumpscareAnim) {
+            jumpscareAnim.textContent = animatronicAI.data.emoji || '🐻';
+            freeRoamScreen?.classList.add('hidden');
+            jumpscareEl.classList.remove('hidden');
+
+            if (typeof playSound === 'function') {
+                playSound('jumpscare');
+            }
+
+            // After jumpscare, handle based on survival mode
+            setTimeout(() => {
+                jumpscareEl.classList.add('hidden');
+
+                if (this.survivalMode && this.survivalMode.isActive) {
+                    this.survivalMode.playerHit();
+                    if (this.survivalMode.playerHealth > 0) {
+                        freeRoamScreen?.classList.remove('hidden');
+                        this.isActive = true;
+                        this.animate();
+                    }
+                } else {
+                    this.showGameOverScreen();
+                }
+            }, 1500);
+        }
+    }
+
+    showVictoryScreen(score) {
+        const victoryScreen = document.getElementById('victory-screen');
+        const freeRoamScreen = document.getElementById('freeroam-screen');
+        const statsEl = document.getElementById('victory-stats');
+
+        if (victoryScreen) {
+            freeRoamScreen?.classList.add('hidden');
+            victoryScreen.classList.remove('hidden');
+
+            if (statsEl) {
+                statsEl.innerHTML = `
+                    <p>🎯 Score: ${score || 0}</p>
+                    <p>⏱️ Survival Mode Voltooid!</p>
+                `;
+            }
+
+            if (typeof playSound === 'function') {
+                playSound('victory');
+            }
+        }
+
+        this.stopSurvivalMode();
+    }
+
+    showGameOverScreen() {
+        const gameOverScreen = document.getElementById('gameover-screen');
+        const freeRoamScreen = document.getElementById('freeroam-screen');
+        const messageEl = document.getElementById('gameover-message');
+
+        if (gameOverScreen) {
+            freeRoamScreen?.classList.add('hidden');
+            gameOverScreen.classList.remove('hidden');
+
+            if (messageEl) {
+                messageEl.textContent = 'De animatronics hebben je gepakt! 💀';
+            }
+        }
+
+        this.stopSurvivalMode();
+    }
+
+    // Called by AnimatronicAI when moving
+    onAnimatronicMove(animId, fromRoom, toRoom) {
+        // Update animatronics display in current room
+        this.updateAnimatronicsInRoom();
+
+        // If animatronic enters player's room, show warning
+        if (toRoom === this.currentRoom) {
+            const ai = this.survivalMode?.aiControllers[animId];
+            if (ai) {
+                this.showWarning(`⚠️ ${ai.data.name} is de kamer binnengekomen!`);
+            }
+        }
+    }
+
+    updateAnimatronicsInRoom() {
+        const animEl = document.getElementById('location-animatronics-3d');
+        if (!animEl || !this.survivalMode) return;
+
+        const animsInRoom = this.survivalMode.getAnimatronicsInRoom(this.currentRoom);
+        if (animsInRoom.length > 0) {
+            const names = animsInRoom.map(ai => `${ai.data.emoji} ${ai.data.name}`).join(', ');
+            animEl.innerHTML = `<span class="warning">⚠️ ${names}</span>`;
+        } else {
+            animEl.innerHTML = '<span style="color: #666;">De ruimte lijkt leeg...</span>';
+        }
+    }
+
+    // Toggle hide (crouch behind furniture)
+    toggleHide() {
+        this.isHiding = !this.isHiding;
+        if (this.isHiding) {
+            this.camera.position.y = 0.8; // Crouch
+            this.showWarning('🙈 Je verstopt je...');
+        } else {
+            this.camera.position.y = this.playerHeight;
+        }
+    }
+}
+
+// ==========================================
+// ANIMATRONIC AI SYSTEM
+// Modular survival mechanics for free roam
+// ==========================================
+
+class AnimatronicAI {
+    constructor(world, id, data) {
+        this.world = world;
+        this.id = id;
+        this.data = data;
+        this.currentRoom = data.startRoom || 'stage';
+        this.targetRoom = null;
+        this.state = 'idle'; // idle, patrolling, hunting, attacking, returning
+        this.aggressionLevel = data.aggression || 1;
+        this.moveTimer = 0;
+        this.moveInterval = (20 - this.aggressionLevel * 2) * 1000; // Time between moves
+        this.detectionRange = 8;
+        this.attackRange = 2;
+        this.canSeePlayer = false;
+        this.lastKnownPlayerRoom = null;
+        this.isStunned = false;
+        this.stunTimer = 0;
+
+        // Unique behavior patterns
+        this.behavior = data.behavior || 'patrol';
+        this.patrolPath = data.patrolPath || [];
+        this.patrolIndex = 0;
+
+        // Visual representation in 3D
+        this.mesh = null;
+        this.eyeGlow = null;
+    }
+
+    // Get connected rooms for pathfinding
+    getConnectedRooms(roomId) {
+        const roomData = this.world.roomData[roomId];
+        if (!roomData || !roomData.doorways) return [];
+        return roomData.doorways.map(d => d.to);
+    }
+
+    // Simple BFS pathfinding
+    findPath(from, to) {
+        if (from === to) return [from];
+
+        const visited = new Set();
+        const queue = [[from]];
+        visited.add(from);
+
+        while (queue.length > 0) {
+            const path = queue.shift();
+            const current = path[path.length - 1];
+            const neighbors = this.getConnectedRooms(current);
+
+            for (const neighbor of neighbors) {
+                if (neighbor === to) {
+                    return [...path, neighbor];
+                }
+                if (!visited.has(neighbor)) {
+                    visited.add(neighbor);
+                    queue.push([...path, neighbor]);
+                }
+            }
+        }
+        return null; // No path found
+    }
+
+    // Check if player is in line of sight
+    checkLineOfSight() {
+        if (!this.world.camera || this.currentRoom !== this.world.currentRoom) {
+            this.canSeePlayer = false;
+            return false;
+        }
+
+        // Check if lights are on (harder to see in dark)
+        const lightMultiplier = this.world.lightsOn ? 1.0 : 0.3;
+        const effectiveRange = this.detectionRange * lightMultiplier;
+
+        const playerPos = this.world.camera.position;
+        const aiPos = this.getPosition();
+        const distance = Math.sqrt(
+            Math.pow(playerPos.x - aiPos.x, 2) +
+            Math.pow(playerPos.z - aiPos.z, 2)
+        );
+
+        // Player running makes more noise = easier to detect
+        const noiseBonus = this.world.isRunning ? 3 : 0;
+
+        this.canSeePlayer = distance < (effectiveRange + noiseBonus);
+        return this.canSeePlayer;
+    }
+
+    // Check if player is hiding
+    isPlayerHiding() {
+        // Check if player is crouched behind furniture (simplified)
+        // In a full implementation, this would check actual hiding spots
+        return this.world.isHiding || false;
+    }
+
+    // Get AI position in current room
+    getPosition() {
+        const roomData = this.world.roomData[this.currentRoom];
+        if (!roomData) return { x: 0, z: 0 };
+
+        // Position varies based on animatronic data
+        return {
+            x: this.data.position?.x || 0,
+            z: this.data.position?.z || 0
+        };
+    }
+
+    // Update AI state machine
+    update(deltaTime) {
+        if (this.isStunned) {
+            this.stunTimer -= deltaTime;
+            if (this.stunTimer <= 0) {
+                this.isStunned = false;
+            }
+            return;
+        }
+
+        this.moveTimer += deltaTime * 1000;
+
+        switch (this.state) {
+            case 'idle':
+                this.updateIdle();
+                break;
+            case 'patrolling':
+                this.updatePatrol();
+                break;
+            case 'hunting':
+                this.updateHunting();
+                break;
+            case 'attacking':
+                this.updateAttacking();
+                break;
+            case 'returning':
+                this.updateReturning();
+                break;
+        }
+
+        // Check for player detection
+        if (this.state !== 'attacking') {
+            this.checkPlayerDetection();
+        }
+    }
+
+    updateIdle() {
+        // Chance to start patrolling
+        if (this.moveTimer >= this.moveInterval) {
+            this.moveTimer = 0;
+            if (Math.random() < 0.3 + (this.aggressionLevel * 0.1)) {
+                this.state = 'patrolling';
+            }
+        }
+    }
+
+    updatePatrol() {
+        if (this.moveTimer >= this.moveInterval) {
+            this.moveTimer = 0;
+            this.moveToNextPatrolPoint();
+        }
+    }
+
+    updateHunting() {
+        // More aggressive movement when hunting
+        const huntInterval = this.moveInterval * 0.5;
+
+        if (this.moveTimer >= huntInterval) {
+            this.moveTimer = 0;
+
+            if (this.lastKnownPlayerRoom) {
+                const path = this.findPath(this.currentRoom, this.lastKnownPlayerRoom);
+                if (path && path.length > 1) {
+                    this.moveToRoom(path[1]);
+                }
+            }
+
+            // Lost the player, return to patrol
+            if (!this.canSeePlayer && this.currentRoom === this.lastKnownPlayerRoom) {
+                this.state = 'patrolling';
+                this.lastKnownPlayerRoom = null;
+            }
+        }
+    }
+
+    updateAttacking() {
+        // Attack animation and jumpscare trigger
+        if (this.currentRoom === this.world.currentRoom) {
+            const playerPos = this.world.camera.position;
+            const aiPos = this.getPosition();
+            const distance = Math.sqrt(
+                Math.pow(playerPos.x - aiPos.x, 2) +
+                Math.pow(playerPos.z - aiPos.z, 2)
+            );
+
+            if (distance < this.attackRange && !this.isPlayerHiding()) {
+                this.triggerJumpscare();
+            }
+        }
+    }
+
+    updateReturning() {
+        if (this.moveTimer >= this.moveInterval) {
+            this.moveTimer = 0;
+
+            const startRoom = this.data.startRoom || 'stage';
+            if (this.currentRoom === startRoom) {
+                this.state = 'idle';
+            } else {
+                const path = this.findPath(this.currentRoom, startRoom);
+                if (path && path.length > 1) {
+                    this.moveToRoom(path[1]);
+                }
+            }
+        }
+    }
+
+    checkPlayerDetection() {
+        if (this.checkLineOfSight() && !this.isPlayerHiding()) {
+            this.lastKnownPlayerRoom = this.world.currentRoom;
+
+            // Start hunting if not already
+            if (this.state !== 'hunting' && this.state !== 'attacking') {
+                this.state = 'hunting';
+                this.onPlayerDetected();
+            }
+
+            // Check for attack range
+            if (this.currentRoom === this.world.currentRoom) {
+                const playerPos = this.world.camera.position;
+                const aiPos = this.getPosition();
+                const distance = Math.sqrt(
+                    Math.pow(playerPos.x - aiPos.x, 2) +
+                    Math.pow(playerPos.z - aiPos.z, 2)
+                );
+
+                if (distance < this.attackRange) {
+                    this.state = 'attacking';
+                }
+            }
+        }
+    }
+
+    moveToNextPatrolPoint() {
+        const connections = this.getConnectedRooms(this.currentRoom);
+        if (connections.length === 0) return;
+
+        // Use patrol path if defined
+        if (this.patrolPath.length > 0) {
+            this.patrolIndex = (this.patrolIndex + 1) % this.patrolPath.length;
+            const nextRoom = this.patrolPath[this.patrolIndex];
+            if (connections.includes(nextRoom)) {
+                this.moveToRoom(nextRoom);
+                return;
+            }
+        }
+
+        // Random movement
+        const nextRoom = connections[Math.floor(Math.random() * connections.length)];
+        this.moveToRoom(nextRoom);
+    }
+
+    moveToRoom(roomId) {
+        const oldRoom = this.currentRoom;
+        this.currentRoom = roomId;
+
+        // Notify world of movement
+        if (this.world.onAnimatronicMove) {
+            this.world.onAnimatronicMove(this.id, oldRoom, roomId);
+        }
+
+        // Play movement sound if player is nearby
+        if (this.world.currentRoom === oldRoom || this.world.currentRoom === roomId) {
+            this.playMovementSound();
+        }
+    }
+
+    playMovementSound() {
+        if (typeof playSound === 'function') {
+            playSound('footstep');
+        }
+        // Show audio cue
+        this.world.showAudioCue(this.data.emoji || '👣');
+    }
+
+    onPlayerDetected() {
+        // Visual/audio feedback when detected
+        this.world.showWarning(`⚠️ ${this.data.name} heeft je gezien!`);
+        if (typeof playSound === 'function') {
+            playSound('alert');
+        }
+    }
+
+    triggerJumpscare() {
+        this.world.triggerJumpscare(this);
+    }
+
+    // Stun the animatronic (flashlight, etc)
+    stun(duration = 3) {
+        this.isStunned = true;
+        this.stunTimer = duration;
+        this.state = 'returning';
+    }
+
+    // Reset to starting position
+    reset() {
+        this.currentRoom = this.data.startRoom || 'stage';
+        this.state = 'idle';
+        this.moveTimer = 0;
+        this.canSeePlayer = false;
+        this.lastKnownPlayerRoom = null;
+        this.isStunned = false;
+    }
+}
+
+// ==========================================
+// SURVIVAL MODE MANAGER
+// ==========================================
+
+class SurvivalMode {
+    constructor(world) {
+        this.world = world;
+        this.isActive = false;
+        this.difficulty = 1; // 1-5
+        this.aiControllers = {};
+        this.gameTime = 0;
+        this.maxTime = 360; // 6 minutes = survive till 6 AM
+        this.playerHealth = 3; // 3 chances
+        this.score = 0;
+        this.hidingSpots = [];
+
+        // Flashlight
+        this.hasFlashlight = true;
+        this.flashlightBattery = 100;
+        this.flashlightOn = false;
+    }
+
+    start(difficulty = 1) {
+        this.isActive = true;
+        this.difficulty = difficulty;
+        this.gameTime = 0;
+        this.playerHealth = 3;
+        this.score = 0;
+        this.flashlightBattery = 100;
+
+        // Initialize AI for each animatronic
+        this.initializeAnimatronics();
+
+        // Update UI
+        this.updateSurvivalHUD();
+
+        // Show start message
+        this.world.showWarning('🌙 De nacht begint... Overleef tot 6 uur!');
+    }
+
+    stop() {
+        this.isActive = false;
+
+        // Stop all AI
+        Object.values(this.aiControllers).forEach(ai => ai.reset());
+        this.aiControllers = {};
+    }
+
+    initializeAnimatronics() {
+        const animatronicConfigs = {
+            freddy: {
+                name: 'Freddy Fazbear',
+                emoji: '🐻',
+                startRoom: 'stage',
+                aggression: this.difficulty,
+                behavior: 'stalker',
+                patrolPath: ['stage', 'dining', 'eastHall', 'eastCorner'],
+                position: { x: 0, z: -5 }
+            },
+            bonnie: {
+                name: 'Bonnie',
+                emoji: '🐰',
+                startRoom: 'stage',
+                aggression: this.difficulty + 1,
+                behavior: 'patrol',
+                patrolPath: ['stage', 'backstage', 'dining', 'westHall', 'westCorner'],
+                position: { x: -3, z: -5 }
+            },
+            chica: {
+                name: 'Chica',
+                emoji: '🐤',
+                startRoom: 'stage',
+                aggression: this.difficulty,
+                behavior: 'patrol',
+                patrolPath: ['stage', 'dining', 'kitchen', 'eastHall'],
+                position: { x: 3, z: -5 }
+            },
+            foxy: {
+                name: 'Foxy',
+                emoji: '🦊',
+                startRoom: 'pirateCove',
+                aggression: this.difficulty + 2,
+                behavior: 'ambush',
+                patrolPath: ['pirateCove', 'dining', 'westHall', 'westCorner'],
+                position: { x: 0, z: -3 }
+            }
+        };
+
+        for (const [id, config] of Object.entries(animatronicConfigs)) {
+            this.aiControllers[id] = new AnimatronicAI(this.world, id, config);
+        }
+    }
+
+    update(deltaTime) {
+        if (!this.isActive) return;
+
+        // Update game time
+        this.gameTime += deltaTime;
+
+        // Check for victory
+        if (this.gameTime >= this.maxTime) {
+            this.victory();
+            return;
+        }
+
+        // Update all animatronic AI
+        for (const ai of Object.values(this.aiControllers)) {
+            ai.update(deltaTime);
+        }
+
+        // Update flashlight battery
+        if (this.flashlightOn) {
+            this.flashlightBattery -= deltaTime * 5;
+            if (this.flashlightBattery <= 0) {
+                this.flashlightBattery = 0;
+                this.toggleFlashlight(false);
+            }
+        }
+
+        // Update HUD
+        this.updateSurvivalHUD();
+    }
+
+    updateSurvivalHUD() {
+        // Calculate in-game time (12 AM to 6 AM)
+        const hours = Math.floor((this.gameTime / this.maxTime) * 6);
+        const timeStr = `0${hours}:00`;
+
+        // Update HUD elements
+        const hudEl = document.getElementById('survival-hud');
+        if (hudEl) {
+            hudEl.innerHTML = `
+                <div class="survival-time">🕐 ${timeStr}</div>
+                <div class="survival-health">❤️ ${this.playerHealth}</div>
+                <div class="survival-battery">🔦 ${Math.round(this.flashlightBattery)}%</div>
+            `;
+        }
+    }
+
+    toggleFlashlight(state = null) {
+        if (this.flashlightBattery <= 0) return;
+
+        this.flashlightOn = state !== null ? state : !this.flashlightOn;
+
+        if (this.flashlightOn) {
+            // Add flashlight to scene
+            this.world.enableFlashlight();
+
+            // Stun nearby animatronics
+            for (const ai of Object.values(this.aiControllers)) {
+                if (ai.currentRoom === this.world.currentRoom && ai.canSeePlayer) {
+                    ai.stun(2);
+                }
+            }
+        } else {
+            this.world.disableFlashlight();
+        }
+    }
+
+    playerHit() {
+        this.playerHealth--;
+        this.world.showWarning('💀 Je bent gepakt! Levens over: ' + this.playerHealth);
+
+        if (this.playerHealth <= 0) {
+            this.gameOver();
+        } else {
+            // Respawn player
+            this.world.respawnPlayer();
+        }
+    }
+
+    victory() {
+        this.isActive = false;
+        this.world.showVictoryScreen(this.score);
+    }
+
+    gameOver() {
+        this.isActive = false;
+        this.world.showGameOverScreen();
+    }
+
+    // Get animatronics in a specific room
+    getAnimatronicsInRoom(roomId) {
+        const result = [];
+        for (const [id, ai] of Object.entries(this.aiControllers)) {
+            if (ai.currentRoom === roomId) {
+                result.push(ai);
+            }
+        }
+        return result;
+    }
 }
 
 // Global instance
 let fnafWorld = null;
+let survivalMode = null;
 
 function startFreeRoam3D() {
     if (!fnafWorld) {
@@ -1885,7 +2869,28 @@ function stopFreeRoam3D() {
     }
 }
 
+function startSurvivalMode3D(difficulty = 1) {
+    if (!fnafWorld) {
+        fnafWorld = new FNAFWorld();
+    }
+    fnafWorld.start();
+    // Small delay to let scene initialize
+    setTimeout(() => {
+        fnafWorld.startSurvivalMode(difficulty);
+    }, 100);
+}
+
+function stopSurvivalMode3D() {
+    if (fnafWorld) {
+        fnafWorld.stopSurvivalMode();
+    }
+}
+
 // Export for use in game.js
 window.FNAFWorld = FNAFWorld;
+window.AnimatronicAI = AnimatronicAI;
+window.SurvivalMode = SurvivalMode;
 window.startFreeRoam3D = startFreeRoam3D;
 window.stopFreeRoam3D = stopFreeRoam3D;
+window.startSurvivalMode3D = startSurvivalMode3D;
+window.stopSurvivalMode3D = stopSurvivalMode3D;
