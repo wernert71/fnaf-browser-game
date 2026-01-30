@@ -1075,8 +1075,9 @@ const freeRoamElements = {
 };
 
 const freeRoamBtn = document.getElementById('freeroam-btn');
+const freeRoamExit3D = document.getElementById('freeroam-exit-3d');
 
-// Start Free Roam Mode
+// Start Free Roam Mode (3D)
 function startFreeRoam() {
     freeRoamState.active = true;
     freeRoamState.currentLocation = 'stage';
@@ -1084,7 +1085,10 @@ function startFreeRoam() {
     elements.startScreen.classList.add('hidden');
     freeRoamElements.screen.classList.remove('hidden');
 
-    updateFreeRoamView();
+    // Start 3D mode
+    if (typeof startFreeRoam3D === 'function') {
+        startFreeRoam3D();
+    }
 }
 
 // Exit Free Roam Mode
@@ -1092,6 +1096,11 @@ function exitFreeRoam() {
     freeRoamState.active = false;
     freeRoamElements.screen.classList.add('hidden');
     elements.startScreen.classList.remove('hidden');
+
+    // Stop 3D mode
+    if (typeof stopFreeRoam3D === 'function') {
+        stopFreeRoam3D();
+    }
 }
 
 // Move to a location with walking animation
@@ -1177,6 +1186,11 @@ function updateFreeRoamView() {
 // Free Roam Event Listeners
 freeRoamBtn.addEventListener('click', startFreeRoam);
 freeRoamElements.exitBtn.addEventListener('click', exitFreeRoam);
+
+// 3D Free Roam exit button
+if (freeRoamExit3D) {
+    freeRoamExit3D.addEventListener('click', exitFreeRoam);
+}
 
 // Keyboard navigation for free roam
 document.addEventListener('keydown', (e) => {

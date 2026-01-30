@@ -7,6 +7,8 @@
     <link rel="stylesheet" href="style.css">
     <!-- PeerJS voor online multiplayer -->
     <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
+    <!-- Three.js voor 3D graphics -->
+    <script src="https://unpkg.com/three@0.160.0/build/three.min.js"></script>
 </head>
 <body>
     <div id="game-container">
@@ -137,36 +139,36 @@
             <div id="jumpscare-text">AAAAHHH!</div>
         </div>
 
-        <!-- Vrij Rondlopen Scherm -->
+        <!-- Vrij Rondlopen Scherm (3D) -->
         <div id="freeroam-screen" class="screen hidden">
-            <!-- Loop Transitie Overlay -->
-            <div id="walk-transition" class="walk-transition hidden">
-                <div class="walk-scene">
-                    <div class="walk-door">🚪</div>
-                    <div class="walk-character">🚶</div>
-                    <p class="walk-text">Lopen naar...</p>
+            <!-- 3D Canvas Container -->
+            <div id="threejs-container"></div>
+
+            <!-- 3D HUD Overlay -->
+            <div id="freeroam-3d-hud">
+                <div id="location-info-3d">
+                    <h2 id="location-name-3d">🎭 Hoofdpodium</h2>
+                    <div id="location-animatronics-3d"></div>
+                </div>
+
+                <div id="freeroam-nav-3d">
+                    <p class="nav-label-3d">🚪 GA NAAR:</p>
+                    <div id="nav-buttons-3d"></div>
+                </div>
+
+                <div id="freeroam-controls-3d">
+                    <button id="freeroam-exit-3d" class="game-btn small">← Menu</button>
+                    <div class="controls-hint">
+                        <p>WASD = Lopen | Muis = Kijken</p>
+                    </div>
                 </div>
             </div>
 
-            <div id="freeroam-view">
-                <div id="freeroam-location">
-                    <div id="location-visual"></div>
-                    <h2 id="location-name">Podium</h2>
-                    <p id="location-description">Het hoofdpodium waar Freddy, Bonnie en Chica optreden voor de kinderen.</p>
-                    <div id="location-animatronics"></div>
-                </div>
-
-                <div id="freeroam-nav">
-                    <p class="nav-label">🚪 KLIK OM TE LOPEN NAAR:</p>
-                    <div id="nav-buttons"></div>
-                </div>
-
-                <div id="freeroam-hud">
-                    <button id="freeroam-exit" class="game-btn small">← Terug naar Menu</button>
-                    <div id="freeroam-controls">
-                        <p>💡 Klik op de groene knoppen hieronder!</p>
-                        <p>Of gebruik WASD / Pijltjestoetsen</p>
-                    </div>
+            <!-- Loading Screen -->
+            <div id="loading-3d" class="loading-overlay">
+                <div class="loading-content">
+                    <div class="loading-spinner"></div>
+                    <p>3D Omgeving laden...</p>
                 </div>
             </div>
         </div>
@@ -285,6 +287,7 @@
         </div>
     </div>
 
+    <script src="freeroam3d.js"></script>
     <script src="game.js"></script>
 </body>
 </html>

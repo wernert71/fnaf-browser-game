@@ -888,8 +888,210 @@ body {
 
 /* Free Roam Screen */
 #freeroam-screen {
-    background: linear-gradient(180deg, #0a0a0a 0%, #000 100%);
+    background: #000;
     position: relative;
+    overflow: hidden;
+}
+
+/* ==========================================
+   3D FREE ROAM MODE
+   ========================================== */
+
+#threejs-container {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 1;
+}
+
+#threejs-container canvas {
+    display: block;
+}
+
+/* 3D HUD Overlay */
+#freeroam-3d-hud {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 10;
+    pointer-events: none;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    padding: 20px;
+}
+
+#freeroam-3d-hud > * {
+    pointer-events: auto;
+}
+
+#location-info-3d {
+    align-self: center;
+    text-align: center;
+    background: rgba(0, 0, 0, 0.7);
+    padding: 15px 30px;
+    border-radius: 10px;
+    border: 2px solid rgba(255, 100, 100, 0.5);
+    max-width: 400px;
+}
+
+#location-name-3d {
+    color: #fff;
+    font-size: 1.5rem;
+    margin-bottom: 10px;
+    text-shadow: 0 0 20px rgba(255, 0, 0, 0.5);
+}
+
+#location-animatronics-3d {
+    font-size: 0.9rem;
+}
+
+#location-animatronics-3d .warning {
+    color: #ff6666;
+    animation: dangerPulse 1s infinite;
+}
+
+@keyframes dangerPulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; }
+}
+
+/* 3D Navigation */
+#freeroam-nav-3d {
+    position: absolute;
+    bottom: 80px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(0, 30, 0, 0.8);
+    padding: 15px 25px;
+    border-radius: 15px;
+    border: 2px solid #00aa00;
+    text-align: center;
+}
+
+.nav-label-3d {
+    color: #00ff00;
+    font-size: 1rem;
+    margin-bottom: 10px;
+    text-shadow: 0 0 10px #00ff00;
+}
+
+#nav-buttons-3d {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    justify-content: center;
+}
+
+.nav-btn-3d {
+    padding: 10px 20px;
+    font-family: 'Courier New', monospace;
+    font-size: 1rem;
+    background: linear-gradient(180deg, #1a3a1a 0%, #0a1a0a 100%);
+    color: #00ff00;
+    border: 2px solid #00aa00;
+    cursor: pointer;
+    transition: all 0.2s;
+    border-radius: 8px;
+    text-shadow: 0 0 5px #00ff00;
+}
+
+.nav-btn-3d:hover {
+    background: linear-gradient(180deg, #2a5a2a 0%, #1a3a1a 100%);
+    transform: scale(1.1);
+    box-shadow: 0 0 20px rgba(0, 255, 0, 0.5);
+}
+
+/* 3D Controls */
+#freeroam-controls-3d {
+    position: absolute;
+    top: 20px;
+    left: 20px;
+    display: flex;
+    align-items: flex-start;
+    gap: 20px;
+}
+
+.controls-hint {
+    background: rgba(0, 0, 0, 0.7);
+    padding: 10px 15px;
+    border-radius: 8px;
+    color: #888;
+    font-size: 0.8rem;
+}
+
+.controls-hint p {
+    margin: 3px 0;
+}
+
+/* Loading Overlay */
+.loading-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: #000;
+    z-index: 100;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.loading-overlay.hidden {
+    display: none;
+}
+
+.loading-content {
+    text-align: center;
+    color: #fff;
+}
+
+.loading-spinner {
+    width: 60px;
+    height: 60px;
+    border: 4px solid #333;
+    border-top-color: #ff3333;
+    border-radius: 50%;
+    margin: 0 auto 20px;
+    animation: spin 1s linear infinite;
+}
+
+/* Crosshair for 3D mode */
+.crosshair {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 20px;
+    height: 20px;
+    pointer-events: none;
+    z-index: 15;
+}
+
+.crosshair::before,
+.crosshair::after {
+    content: '';
+    position: absolute;
+    background: rgba(255, 255, 255, 0.5);
+}
+
+.crosshair::before {
+    width: 2px;
+    height: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+}
+
+.crosshair::after {
+    width: 100%;
+    height: 2px;
+    top: 50%;
+    transform: translateY(-50%);
 }
 
 /* Walking Transition Animation */
