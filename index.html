@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Five Nights at Freddy's - Browser Edition</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div id="game-container">
+        <!-- Start Screen -->
+        <div id="start-screen" class="screen">
+            <h1>FIVE NIGHTS AT FREDDY'S</h1>
+            <p class="subtitle">Browser Edition</p>
+            <button id="start-btn" class="game-btn">Start Night</button>
+            <div class="instructions">
+                <p>Survive until 6 AM</p>
+                <p>Use cameras to track animatronics</p>
+                <p>Close doors to stay safe</p>
+                <p>Watch your power!</p>
+            </div>
+        </div>
+
+        <!-- Main Game Screen -->
+        <div id="game-screen" class="screen hidden">
+            <!-- Office View -->
+            <div id="office-view">
+                <div id="office-bg">
+                    <div id="left-door-area">
+                        <div id="left-door" class="door"></div>
+                        <button id="left-door-btn" class="door-btn">LEFT DOOR</button>
+                        <button id="left-light-btn" class="light-btn">LIGHT</button>
+                        <div id="left-window" class="window"></div>
+                    </div>
+
+                    <div id="center-area">
+                        <div id="desk">
+                            <div id="fan"></div>
+                        </div>
+                    </div>
+
+                    <div id="right-door-area">
+                        <div id="right-door" class="door"></div>
+                        <button id="right-door-btn" class="door-btn">RIGHT DOOR</button>
+                        <button id="right-light-btn" class="light-btn">LIGHT</button>
+                        <div id="right-window" class="window"></div>
+                    </div>
+                </div>
+
+                <!-- Animatronic at door (jump scare zone) -->
+                <div id="left-animatronic" class="door-animatronic hidden"></div>
+                <div id="right-animatronic" class="door-animatronic hidden"></div>
+            </div>
+
+            <!-- Camera View -->
+            <div id="camera-view" class="hidden">
+                <div id="camera-static"></div>
+                <div id="camera-feed">
+                    <div id="camera-name">CAM 1A - SHOW STAGE</div>
+                    <div id="camera-content">
+                        <div id="animatronic-display"></div>
+                    </div>
+                </div>
+                <div id="camera-map">
+                    <button class="cam-btn" data-cam="1A">1A</button>
+                    <button class="cam-btn" data-cam="1B">1B</button>
+                    <button class="cam-btn" data-cam="2A">2A</button>
+                    <button class="cam-btn" data-cam="2B">2B</button>
+                    <button class="cam-btn" data-cam="3">3</button>
+                    <button class="cam-btn" data-cam="4A">4A</button>
+                    <button class="cam-btn" data-cam="4B">4B</button>
+                </div>
+            </div>
+
+            <!-- HUD -->
+            <div id="hud">
+                <div id="time-display">12 AM</div>
+                <div id="night-display">Night 1</div>
+                <div id="power-display">
+                    <span>Power: </span>
+                    <span id="power-value">100</span>%
+                    <div id="power-bar">
+                        <div id="power-fill"></div>
+                    </div>
+                    <span>Usage: </span>
+                    <span id="usage-bars">|</span>
+                </div>
+            </div>
+
+            <!-- Camera Toggle Button -->
+            <button id="camera-toggle">
+                <span id="camera-icon">📹</span>
+                <span>CAMERAS</span>
+            </button>
+        </div>
+
+        <!-- Jump Scare Screen -->
+        <div id="jumpscare-screen" class="screen hidden">
+            <div id="jumpscare-animatronic"></div>
+        </div>
+
+        <!-- Game Over Screen -->
+        <div id="gameover-screen" class="screen hidden">
+            <h1>GAME OVER</h1>
+            <p id="gameover-message"></p>
+            <button id="retry-btn" class="game-btn">Try Again</button>
+        </div>
+
+        <!-- Victory Screen -->
+        <div id="victory-screen" class="screen hidden">
+            <h1>6 AM</h1>
+            <p class="victory-text">You survived the night!</p>
+            <button id="next-night-btn" class="game-btn">Next Night</button>
+        </div>
+    </div>
+
+    <script src="game.js"></script>
+</body>
+</html>

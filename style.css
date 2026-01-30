@@ -1,0 +1,541 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    background-color: #000;
+    font-family: 'Courier New', monospace;
+    overflow: hidden;
+    user-select: none;
+}
+
+#game-container {
+    width: 100vw;
+    height: 100vh;
+    position: relative;
+    background: #000;
+}
+
+.screen {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+
+.hidden {
+    display: none !important;
+}
+
+/* Start Screen */
+#start-screen {
+    background: linear-gradient(180deg, #1a0a0a 0%, #000 100%);
+}
+
+#start-screen h1 {
+    color: #ff3333;
+    font-size: 3rem;
+    text-shadow: 0 0 20px #ff0000, 0 0 40px #ff0000;
+    letter-spacing: 4px;
+    animation: flicker 3s infinite;
+}
+
+.subtitle {
+    color: #888;
+    font-size: 1.2rem;
+    margin-bottom: 40px;
+}
+
+@keyframes flicker {
+    0%, 100% { opacity: 1; }
+    92% { opacity: 1; }
+    93% { opacity: 0.3; }
+    94% { opacity: 1; }
+    96% { opacity: 0.5; }
+    97% { opacity: 1; }
+}
+
+.game-btn {
+    padding: 15px 40px;
+    font-size: 1.5rem;
+    font-family: 'Courier New', monospace;
+    background: #333;
+    color: #fff;
+    border: 2px solid #ff3333;
+    cursor: pointer;
+    transition: all 0.3s;
+    margin: 20px;
+}
+
+.game-btn:hover {
+    background: #ff3333;
+    box-shadow: 0 0 20px #ff0000;
+}
+
+.instructions {
+    margin-top: 40px;
+    color: #666;
+    text-align: center;
+}
+
+.instructions p {
+    margin: 10px 0;
+}
+
+/* Game Screen */
+#game-screen {
+    background: #111;
+}
+
+/* Office View */
+#office-view {
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(180deg, #1a1a1a 0%, #0a0a0a 100%);
+    display: flex;
+    position: relative;
+}
+
+#office-bg {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    justify-content: space-between;
+    padding: 20px;
+}
+
+/* Door Areas */
+#left-door-area, #right-door-area {
+    width: 200px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    position: relative;
+}
+
+.door {
+    width: 100%;
+    height: 300px;
+    background: #2a2a2a;
+    border: 3px solid #444;
+    transition: transform 0.3s;
+    position: relative;
+}
+
+.door.closed {
+    background: #1a1a1a;
+    border-color: #ff3333;
+    box-shadow: inset 0 0 20px rgba(255, 0, 0, 0.3);
+}
+
+.door.closed::after {
+    content: 'CLOSED';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    color: #ff3333;
+    font-weight: bold;
+}
+
+.window {
+    width: 100%;
+    height: 150px;
+    background: #111;
+    border: 2px solid #333;
+    position: relative;
+    overflow: hidden;
+}
+
+.window.lit {
+    background: #222;
+    border-color: #ffcc00;
+    box-shadow: 0 0 30px rgba(255, 200, 0, 0.5);
+}
+
+.door-btn, .light-btn {
+    padding: 10px 20px;
+    font-family: 'Courier New', monospace;
+    font-size: 0.9rem;
+    background: #333;
+    color: #fff;
+    border: 2px solid #555;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.door-btn:hover, .light-btn:hover {
+    background: #444;
+}
+
+.door-btn.active {
+    background: #ff3333;
+    border-color: #ff0000;
+}
+
+.light-btn.active {
+    background: #ffcc00;
+    border-color: #ff9900;
+    color: #000;
+}
+
+/* Center Area */
+#center-area {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+
+#desk {
+    width: 300px;
+    height: 150px;
+    background: #2a2a2a;
+    border: 2px solid #444;
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+#fan {
+    width: 60px;
+    height: 60px;
+    border: 3px solid #555;
+    border-radius: 50%;
+    position: relative;
+    animation: spin 0.5s linear infinite;
+}
+
+#fan::before, #fan::after {
+    content: '';
+    position: absolute;
+    background: #444;
+}
+
+#fan::before {
+    width: 4px;
+    height: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+}
+
+#fan::after {
+    width: 100%;
+    height: 4px;
+    top: 50%;
+    transform: translateY(-50%);
+}
+
+@keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
+/* Door Animatronics */
+.door-animatronic {
+    position: absolute;
+    width: 150px;
+    height: 250px;
+    font-size: 8rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 10;
+    text-shadow: 0 0 20px #ff0000;
+    animation: creepyShake 0.1s infinite;
+}
+
+#left-animatronic {
+    left: 50px;
+    top: 100px;
+}
+
+#right-animatronic {
+    right: 50px;
+    top: 100px;
+}
+
+@keyframes creepyShake {
+    0%, 100% { transform: translate(0, 0); }
+    25% { transform: translate(-2px, 1px); }
+    50% { transform: translate(2px, -1px); }
+    75% { transform: translate(-1px, 2px); }
+}
+
+/* Camera View */
+#camera-view {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: #000;
+}
+
+#camera-static {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: repeating-linear-gradient(
+        0deg,
+        rgba(0, 0, 0, 0.1) 0px,
+        rgba(0, 0, 0, 0.1) 1px,
+        transparent 1px,
+        transparent 2px
+    );
+    pointer-events: none;
+    z-index: 5;
+    animation: staticNoise 0.1s infinite;
+}
+
+@keyframes staticNoise {
+    0% { opacity: 0.8; }
+    50% { opacity: 0.5; }
+    100% { opacity: 0.8; }
+}
+
+#camera-feed {
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(180deg, #1a2a1a 0%, #0a150a 100%);
+    display: flex;
+    flex-direction: column;
+    padding: 20px;
+    border: 4px solid #333;
+}
+
+#camera-name {
+    color: #00ff00;
+    font-size: 1.2rem;
+    padding: 10px;
+    background: rgba(0, 0, 0, 0.5);
+    display: inline-block;
+}
+
+#camera-content {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+}
+
+#animatronic-display {
+    font-size: 10rem;
+    text-shadow: 0 0 30px rgba(255, 0, 0, 0.5);
+}
+
+#camera-map {
+    position: absolute;
+    bottom: 20px;
+    right: 20px;
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 5px;
+    background: rgba(0, 0, 0, 0.8);
+    padding: 15px;
+    border: 2px solid #333;
+}
+
+.cam-btn {
+    padding: 10px 15px;
+    font-family: 'Courier New', monospace;
+    font-size: 0.8rem;
+    background: #222;
+    color: #00ff00;
+    border: 1px solid #00ff00;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.cam-btn:hover, .cam-btn.active {
+    background: #00ff00;
+    color: #000;
+}
+
+/* HUD */
+#hud {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    text-align: right;
+    color: #fff;
+    z-index: 20;
+}
+
+#time-display {
+    font-size: 2rem;
+    color: #fff;
+    text-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
+}
+
+#night-display {
+    font-size: 1rem;
+    color: #888;
+    margin-bottom: 20px;
+}
+
+#power-display {
+    font-size: 1rem;
+    color: #00ff00;
+}
+
+#power-bar {
+    width: 150px;
+    height: 15px;
+    background: #333;
+    border: 1px solid #00ff00;
+    margin: 5px 0;
+}
+
+#power-fill {
+    height: 100%;
+    background: #00ff00;
+    transition: width 0.3s;
+}
+
+#usage-bars {
+    color: #00ff00;
+    letter-spacing: 3px;
+}
+
+/* Camera Toggle */
+#camera-toggle {
+    position: absolute;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    padding: 15px 30px;
+    font-family: 'Courier New', monospace;
+    font-size: 1.2rem;
+    background: #222;
+    color: #fff;
+    border: 2px solid #666;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    z-index: 20;
+    transition: all 0.2s;
+}
+
+#camera-toggle:hover {
+    background: #333;
+    border-color: #00ff00;
+}
+
+#camera-toggle.active {
+    background: #00ff00;
+    color: #000;
+}
+
+/* Jump Scare Screen */
+#jumpscare-screen {
+    background: #000;
+    z-index: 100;
+}
+
+#jumpscare-animatronic {
+    font-size: 20rem;
+    animation: jumpscare 0.5s ease-out;
+    text-shadow: 0 0 50px #ff0000;
+}
+
+@keyframes jumpscare {
+    0% {
+        transform: scale(0.5) rotate(-10deg);
+        opacity: 0;
+    }
+    50% {
+        transform: scale(1.2) rotate(5deg);
+    }
+    100% {
+        transform: scale(1) rotate(0deg);
+        opacity: 1;
+    }
+}
+
+/* Game Over Screen */
+#gameover-screen {
+    background: #000;
+}
+
+#gameover-screen h1 {
+    color: #ff0000;
+    font-size: 4rem;
+    text-shadow: 0 0 30px #ff0000;
+    animation: gameoverPulse 1s infinite;
+}
+
+@keyframes gameoverPulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.7; }
+}
+
+#gameover-message {
+    color: #888;
+    font-size: 1.2rem;
+    margin: 20px 0;
+}
+
+/* Victory Screen */
+#victory-screen {
+    background: linear-gradient(180deg, #1a1a2a 0%, #000 100%);
+}
+
+#victory-screen h1 {
+    color: #ffcc00;
+    font-size: 5rem;
+    text-shadow: 0 0 30px #ffcc00;
+}
+
+.victory-text {
+    color: #00ff00;
+    font-size: 1.5rem;
+    margin: 20px 0;
+}
+
+/* Power Out Effect */
+.power-out {
+    animation: powerOutFlicker 0.5s infinite;
+}
+
+@keyframes powerOutFlicker {
+    0%, 100% { opacity: 0.1; }
+    50% { opacity: 0.05; }
+}
+
+/* Responsive */
+@media (max-width: 800px) {
+    #start-screen h1 {
+        font-size: 1.8rem;
+    }
+
+    #left-door-area, #right-door-area {
+        width: 120px;
+    }
+
+    .door {
+        height: 200px;
+    }
+
+    .window {
+        height: 100px;
+    }
+
+    #animatronic-display {
+        font-size: 6rem;
+    }
+}
