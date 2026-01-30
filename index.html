@@ -5,6 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Vijf Nachten bij Freddy's - Browser Editie</title>
     <link rel="stylesheet" href="style.css">
+    <!-- PeerJS voor online multiplayer -->
+    <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
 </head>
 <body>
     <div id="game-container">
@@ -30,6 +32,7 @@
             </div>
             <div class="menu-buttons">
                 <button id="start-btn" class="game-btn">🌙 Start Nacht</button>
+                <button id="multiplayer-btn" class="game-btn multiplayer">👥 Multiplayer</button>
                 <button id="freeroam-btn" class="game-btn freeroam">🚶 Vrij Rondlopen</button>
             </div>
             <div class="instructions">
@@ -136,6 +139,15 @@
 
         <!-- Vrij Rondlopen Scherm -->
         <div id="freeroam-screen" class="screen hidden">
+            <!-- Loop Transitie Overlay -->
+            <div id="walk-transition" class="walk-transition hidden">
+                <div class="walk-scene">
+                    <div class="walk-door">🚪</div>
+                    <div class="walk-character">🚶</div>
+                    <p class="walk-text">Lopen naar...</p>
+                </div>
+            </div>
+
             <div id="freeroam-view">
                 <div id="freeroam-location">
                     <div id="location-visual"></div>
@@ -145,17 +157,113 @@
                 </div>
 
                 <div id="freeroam-nav">
-                    <p class="nav-label">🚶 Ga naar:</p>
+                    <p class="nav-label">🚪 KLIK OM TE LOPEN NAAR:</p>
                     <div id="nav-buttons"></div>
                 </div>
 
                 <div id="freeroam-hud">
                     <button id="freeroam-exit" class="game-btn small">← Terug naar Menu</button>
                     <div id="freeroam-controls">
-                        <p>WASD of Pijltjestoetsen om te bewegen</p>
-                        <p>Klik op locaties om te reizen</p>
+                        <p>💡 Klik op de groene knoppen hieronder!</p>
+                        <p>Of gebruik WASD / Pijltjestoetsen</p>
                     </div>
                 </div>
+            </div>
+        </div>
+
+        <!-- Multiplayer Menu Scherm -->
+        <div id="multiplayer-screen" class="screen hidden">
+            <h1>👥 MULTIPLAYER</h1>
+            <p class="subtitle">Kies een spelmodus</p>
+
+            <div class="multiplayer-modes">
+                <div class="mp-mode" id="coop-mode">
+                    <div class="mode-icon">🤝</div>
+                    <h3>Lokale Co-op</h3>
+                    <p>2 spelers, 1 computer</p>
+                    <p class="mode-desc">Speler 1: Linker deur (Q/W/A/S)<br>Speler 2: Rechter deur (Pijltjes/[/])</p>
+                    <button class="game-btn small" id="start-coop">Start Co-op</button>
+                </div>
+
+                <div class="mp-mode" id="versus-mode">
+                    <div class="mode-icon">⚔️</div>
+                    <h3>Versus Modus</h3>
+                    <p>Bewaker vs Animatronics</p>
+                    <p class="mode-desc">Speler 1: Bewaker<br>Speler 2: Bestuurt de animatronics</p>
+                    <button class="game-btn small" id="start-versus">Start Versus</button>
+                </div>
+
+                <div class="mp-mode" id="online-mode">
+                    <div class="mode-icon">🌐</div>
+                    <h3>Online</h3>
+                    <p>Speel via internet</p>
+                    <p class="mode-desc">Maak verbinding met een vriend</p>
+                    <button class="game-btn small" id="start-online">Online Lobby</button>
+                </div>
+            </div>
+
+            <button id="mp-back-btn" class="game-btn small">← Terug</button>
+        </div>
+
+        <!-- Online Lobby Scherm -->
+        <div id="online-lobby-screen" class="screen hidden">
+            <h1>🌐 ONLINE LOBBY</h1>
+
+            <div class="lobby-container">
+                <div class="lobby-section">
+                    <h3>📤 Maak een Lobby</h3>
+                    <p>Deel deze code met je vriend:</p>
+                    <div class="lobby-code" id="my-lobby-code">Laden...</div>
+                    <button class="game-btn small" id="copy-code-btn">📋 Kopieer Code</button>
+                </div>
+
+                <div class="lobby-divider">OF</div>
+
+                <div class="lobby-section">
+                    <h3>📥 Join een Lobby</h3>
+                    <p>Voer de code van je vriend in:</p>
+                    <input type="text" id="join-code-input" class="lobby-input" placeholder="Voer code in..." maxlength="8">
+                    <button class="game-btn small" id="join-lobby-btn">🎮 Verbinden</button>
+                </div>
+            </div>
+
+            <div id="connection-status" class="connection-status"></div>
+
+            <div id="online-role-select" class="hidden">
+                <h3>Kies je Rol:</h3>
+                <button class="game-btn" id="role-guard">🛡️ Bewaker</button>
+                <button class="game-btn" id="role-animatronic">🐻 Animatronics</button>
+            </div>
+
+            <button id="lobby-back-btn" class="game-btn small">← Terug</button>
+        </div>
+
+        <!-- Versus Mode HUD (voor animatronic speler) -->
+        <div id="versus-hud" class="hidden">
+            <div class="versus-panel">
+                <h3>🐻 ANIMATRONIC BESTURING</h3>
+                <p class="versus-info">Klik op een animatronic om hem te laten bewegen!</p>
+                <div class="animatronic-controls">
+                    <button class="anim-btn" data-anim="freddy">🐻 Freddy</button>
+                    <button class="anim-btn" data-anim="bonnie">🐰 Bonnie</button>
+                    <button class="anim-btn" data-anim="chica">🐤 Chica</button>
+                    <button class="anim-btn" data-anim="foxy">🦊 Foxy Sprint!</button>
+                </div>
+                <div class="versus-cooldown">
+                    <span>Cooldown: </span><span id="move-cooldown">Klaar!</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Co-op HUD -->
+        <div id="coop-hud" class="hidden">
+            <div class="coop-panel coop-p1">
+                <span>👤 Speler 1: Links</span>
+                <span class="coop-keys">Q/W/A/S/F</span>
+            </div>
+            <div class="coop-panel coop-p2">
+                <span>👤 Speler 2: Rechts</span>
+                <span class="coop-keys">Pijltjes/[/]/\</span>
             </div>
         </div>
 

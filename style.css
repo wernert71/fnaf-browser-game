@@ -889,6 +889,140 @@ body {
 /* Free Roam Screen */
 #freeroam-screen {
     background: linear-gradient(180deg, #0a0a0a 0%, #000 100%);
+    position: relative;
+}
+
+/* Walking Transition Animation */
+.walk-transition {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.95);
+    z-index: 100;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    animation: fadeIn 0.3s ease-out;
+}
+
+.walk-transition.hidden {
+    display: none !important;
+}
+
+.walk-scene {
+    text-align: center;
+    position: relative;
+    width: 400px;
+    height: 300px;
+}
+
+/* Floor/hallway effect */
+.walk-scene::before {
+    content: '═══════════════════════════════════';
+    position: absolute;
+    bottom: 40px;
+    left: 50%;
+    transform: translateX(-50%);
+    color: #333;
+    font-size: 1rem;
+    letter-spacing: 2px;
+}
+
+/* Footsteps trail */
+.walk-scene::after {
+    content: '👣  👣  👣  👣';
+    position: absolute;
+    bottom: 55px;
+    left: 0;
+    color: rgba(100, 100, 100, 0.3);
+    font-size: 1.5rem;
+    animation: footsteps 1.5s ease-in-out;
+}
+
+@keyframes footsteps {
+    0% { opacity: 0; left: -100px; }
+    30% { opacity: 0.5; }
+    70% { opacity: 0.3; left: 40%; }
+    100% { opacity: 0; left: 50%; }
+}
+
+.walk-door {
+    font-size: 8rem;
+    position: absolute;
+    top: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    animation: doorOpen 1.5s ease-in-out;
+}
+
+@keyframes doorOpen {
+    0% { transform: translateX(-50%) rotateY(0deg); opacity: 1; }
+    50% { transform: translateX(-50%) rotateY(-60deg); opacity: 0.8; }
+    100% { transform: translateX(-50%) rotateY(-90deg); opacity: 0.3; }
+}
+
+.walk-character {
+    font-size: 5rem;
+    position: absolute;
+    bottom: 50px;
+    animation: walkToDoor 1.5s ease-in-out forwards, walkBob 0.3s ease-in-out infinite;
+}
+
+@keyframes walkToDoor {
+    0% {
+        left: -50px;
+        transform: scaleX(1);
+    }
+    30% {
+        left: 30%;
+        transform: scaleX(1);
+    }
+    50% {
+        left: 45%;
+        transform: scaleX(1) scale(0.9);
+    }
+    70% {
+        left: 48%;
+        transform: scaleX(1) scale(0.7);
+    }
+    100% {
+        left: 50%;
+        transform: translateX(-50%) scale(0.3);
+        opacity: 0;
+    }
+}
+
+@keyframes walkBob {
+    0%, 100% { margin-bottom: 0; }
+    50% { margin-bottom: 5px; }
+}
+
+.walk-text {
+    position: absolute;
+    bottom: 10px;
+    left: 50%;
+    transform: translateX(-50%);
+    color: #00ff00;
+    font-size: 1.5rem;
+    text-shadow: 0 0 10px #00ff00;
+    animation: textPulse 0.5s ease-in-out infinite;
+}
+
+@keyframes textPulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.6; }
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+@keyframes fadeOut {
+    from { opacity: 1; }
+    to { opacity: 0; }
 }
 
 #freeroam-view {
@@ -909,19 +1043,72 @@ body {
 }
 
 #location-visual {
-    width: 200px;
-    height: 200px;
+    position: relative;
+    width: auto;
+    max-width: 90vw;
+    height: auto;
+    min-height: 250px;
     margin: 0 auto 20px;
-    border-radius: 50%;
+    border-radius: 15px;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 6rem;
-    border: 4px solid #333;
+    border: 3px solid #333;
     box-shadow:
         0 0 30px rgba(0, 0, 0, 0.8),
         inset 0 0 50px rgba(0, 0, 0, 0.5);
     animation: locationPulse 3s ease-in-out infinite;
+    padding: 20px;
+    overflow: hidden;
+}
+
+/* ASCII Art Scene Styling */
+.location-scene {
+    font-family: 'Courier New', Consolas, monospace;
+    font-size: 0.75rem;
+    line-height: 1.2;
+    color: #00ff88;
+    text-shadow:
+        0 0 5px #00ff88,
+        0 0 15px rgba(0, 255, 136, 0.5);
+    white-space: pre;
+    text-align: left;
+    letter-spacing: 1px;
+    animation: sceneGlow 2s ease-in-out infinite;
+}
+
+@keyframes sceneGlow {
+    0%, 100% {
+        text-shadow:
+            0 0 5px #00ff88,
+            0 0 15px rgba(0, 255, 136, 0.5);
+        opacity: 1;
+    }
+    50% {
+        text-shadow:
+            0 0 10px #00ff88,
+            0 0 25px rgba(0, 255, 136, 0.7);
+        opacity: 0.95;
+    }
+}
+
+/* Scanline effect over scene */
+#location-visual::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: repeating-linear-gradient(
+        0deg,
+        transparent 0px,
+        transparent 2px,
+        rgba(0, 255, 136, 0.03) 2px,
+        rgba(0, 255, 136, 0.03) 4px
+    );
+    pointer-events: none;
+    border-radius: 15px;
 }
 
 @keyframes locationPulse {
@@ -981,40 +1168,54 @@ body {
 #freeroam-nav {
     margin-top: 30px;
     text-align: center;
+    background: rgba(0, 50, 0, 0.5);
+    padding: 20px 30px;
+    border-radius: 15px;
+    border: 2px solid #00aa00;
+    box-shadow: 0 0 20px rgba(0, 255, 0, 0.2);
 }
 
 .nav-label {
-    color: #666;
+    color: #00ff00;
     margin-bottom: 15px;
-    font-size: 0.9rem;
+    font-size: 1.2rem;
+    font-weight: bold;
+    text-shadow: 0 0 10px #00ff00;
 }
 
 #nav-buttons {
     display: flex;
     flex-wrap: wrap;
     justify-content: center;
-    gap: 10px;
-    max-width: 500px;
+    gap: 15px;
+    max-width: 600px;
 }
 
 .nav-btn {
-    padding: 12px 20px;
+    padding: 15px 25px;
     font-family: 'Courier New', monospace;
-    font-size: 1rem;
-    background: #1a1a2a;
-    color: #aaa;
-    border: 2px solid #444;
+    font-size: 1.2rem;
+    background: linear-gradient(180deg, #1a3a1a 0%, #0a1a0a 100%);
+    color: #00ff00;
+    border: 3px solid #00aa00;
     cursor: pointer;
     transition: all 0.2s;
-    border-radius: 5px;
+    border-radius: 10px;
+    text-shadow: 0 0 5px #00ff00;
+    animation: navPulse 2s ease-in-out infinite;
+}
+
+@keyframes navPulse {
+    0%, 100% { box-shadow: 0 0 10px rgba(0, 255, 0, 0.3); }
+    50% { box-shadow: 0 0 20px rgba(0, 255, 0, 0.5); }
 }
 
 .nav-btn:hover {
-    background: #2a2a4a;
+    background: linear-gradient(180deg, #2a5a2a 0%, #1a3a1a 100%);
     border-color: #00ff00;
-    color: #00ff00;
-    transform: translateY(-2px);
-    box-shadow: 0 5px 15px rgba(0, 255, 0, 0.2);
+    color: #fff;
+    transform: scale(1.1);
+    box-shadow: 0 0 30px rgba(0, 255, 0, 0.6);
 }
 
 /* Free Roam HUD */
@@ -1047,6 +1248,301 @@ body {
     font-size: 0.9rem;
 }
 
+/* ==========================================
+   MULTIPLAYER STYLES
+   ========================================== */
+
+/* Multiplayer button */
+.game-btn.multiplayer {
+    background: #1a1a4a;
+    border-color: #6666ff;
+}
+
+.game-btn.multiplayer:hover {
+    background: #4444aa;
+    box-shadow: 0 0 20px #6666ff;
+}
+
+/* Multiplayer Menu Screen */
+#multiplayer-screen {
+    background: linear-gradient(180deg, #0a0a1a 0%, #000 100%);
+}
+
+#multiplayer-screen h1 {
+    color: #6666ff;
+    text-shadow: 0 0 20px #4444aa;
+    margin-bottom: 10px;
+}
+
+.multiplayer-modes {
+    display: flex;
+    gap: 20px;
+    margin: 30px 0;
+    flex-wrap: wrap;
+    justify-content: center;
+}
+
+.mp-mode {
+    background: rgba(30, 30, 60, 0.8);
+    border: 2px solid #444;
+    border-radius: 15px;
+    padding: 20px;
+    width: 220px;
+    text-align: center;
+    transition: all 0.3s;
+}
+
+.mp-mode:hover {
+    border-color: #6666ff;
+    transform: translateY(-5px);
+    box-shadow: 0 10px 30px rgba(100, 100, 255, 0.3);
+}
+
+.mode-icon {
+    font-size: 4rem;
+    margin-bottom: 10px;
+}
+
+.mp-mode h3 {
+    color: #fff;
+    margin-bottom: 5px;
+}
+
+.mp-mode p {
+    color: #888;
+    font-size: 0.9rem;
+    margin: 5px 0;
+}
+
+.mode-desc {
+    font-size: 0.75rem !important;
+    color: #666 !important;
+    line-height: 1.4;
+}
+
+/* Online Lobby Screen */
+#online-lobby-screen {
+    background: linear-gradient(180deg, #0a1a0a 0%, #000 100%);
+}
+
+#online-lobby-screen h1 {
+    color: #00ff00;
+    text-shadow: 0 0 20px #00aa00;
+}
+
+.lobby-container {
+    display: flex;
+    gap: 40px;
+    margin: 30px 0;
+    align-items: center;
+    flex-wrap: wrap;
+    justify-content: center;
+}
+
+.lobby-section {
+    background: rgba(0, 30, 0, 0.8);
+    border: 2px solid #00aa00;
+    border-radius: 15px;
+    padding: 25px;
+    text-align: center;
+    min-width: 250px;
+}
+
+.lobby-section h3 {
+    color: #00ff00;
+    margin-bottom: 15px;
+}
+
+.lobby-section p {
+    color: #888;
+    margin-bottom: 15px;
+}
+
+.lobby-code {
+    background: #000;
+    border: 2px solid #00ff00;
+    padding: 15px 30px;
+    font-size: 2rem;
+    font-family: 'Courier New', monospace;
+    color: #00ff00;
+    letter-spacing: 5px;
+    margin-bottom: 15px;
+    text-shadow: 0 0 10px #00ff00;
+    user-select: all;
+}
+
+.lobby-input {
+    background: #000;
+    border: 2px solid #00aa00;
+    padding: 15px;
+    font-size: 1.5rem;
+    font-family: 'Courier New', monospace;
+    color: #00ff00;
+    text-align: center;
+    letter-spacing: 3px;
+    width: 100%;
+    margin-bottom: 15px;
+}
+
+.lobby-input:focus {
+    outline: none;
+    border-color: #00ff00;
+    box-shadow: 0 0 20px rgba(0, 255, 0, 0.3);
+}
+
+.lobby-input::placeholder {
+    color: #006600;
+}
+
+.lobby-divider {
+    color: #444;
+    font-size: 1.5rem;
+    font-weight: bold;
+}
+
+.connection-status {
+    margin: 20px 0;
+    padding: 15px;
+    border-radius: 10px;
+    font-size: 1.1rem;
+}
+
+.connection-status.connecting {
+    background: rgba(255, 255, 0, 0.2);
+    border: 1px solid #ffff00;
+    color: #ffff00;
+}
+
+.connection-status.connected {
+    background: rgba(0, 255, 0, 0.2);
+    border: 1px solid #00ff00;
+    color: #00ff00;
+}
+
+.connection-status.error {
+    background: rgba(255, 0, 0, 0.2);
+    border: 1px solid #ff0000;
+    color: #ff0000;
+}
+
+#online-role-select {
+    margin: 20px 0;
+}
+
+#online-role-select h3 {
+    color: #fff;
+    margin-bottom: 15px;
+}
+
+/* Versus HUD */
+#versus-hud {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    z-index: 1000;
+}
+
+.versus-panel {
+    background: rgba(60, 20, 20, 0.95);
+    border: 3px solid #ff3333;
+    border-radius: 15px;
+    padding: 20px;
+    text-align: center;
+    box-shadow: 0 0 30px rgba(255, 0, 0, 0.5);
+}
+
+.versus-panel h3 {
+    color: #ff6666;
+    margin-bottom: 10px;
+}
+
+.versus-info {
+    color: #888;
+    font-size: 0.8rem;
+    margin-bottom: 15px;
+}
+
+.animatronic-controls {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-bottom: 15px;
+}
+
+.anim-btn {
+    padding: 12px;
+    font-family: 'Courier New', monospace;
+    font-size: 0.9rem;
+    background: #2a1a1a;
+    color: #ff9999;
+    border: 2px solid #ff3333;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.anim-btn:hover:not(:disabled) {
+    background: #ff3333;
+    color: #fff;
+    transform: scale(1.05);
+}
+
+.anim-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.anim-btn[data-anim="foxy"] {
+    grid-column: 1 / -1;
+    background: #3a1a2a;
+    border-color: #ff6600;
+}
+
+.versus-cooldown {
+    color: #ffcc00;
+    font-size: 0.9rem;
+}
+
+/* Co-op HUD */
+#coop-hud {
+    position: fixed;
+    top: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    gap: 20px;
+    z-index: 1000;
+}
+
+.coop-panel {
+    background: rgba(0, 0, 0, 0.8);
+    border: 2px solid #666;
+    border-radius: 10px;
+    padding: 10px 20px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 5px;
+}
+
+.coop-panel span {
+    color: #fff;
+    font-size: 0.85rem;
+}
+
+.coop-keys {
+    color: #ffcc00 !important;
+    font-family: 'Courier New', monospace;
+}
+
+.coop-p1 {
+    border-color: #ff6666;
+}
+
+.coop-p2 {
+    border-color: #6666ff;
+}
+
 /* Responsive */
 @media (max-width: 800px) {
     #start-screen h1 {
@@ -1070,9 +1566,13 @@ body {
     }
 
     #location-visual {
-        width: 150px;
-        height: 150px;
-        font-size: 4rem;
+        min-height: 180px;
+        padding: 10px;
+    }
+
+    .location-scene {
+        font-size: 0.5rem;
+        letter-spacing: 0;
     }
 
     #location-name {

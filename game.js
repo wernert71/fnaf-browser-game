@@ -800,20 +800,45 @@ const freeRoamState = {
     currentLocation: 'stage'
 };
 
-// Locatie data met verbindingen en beschrijvingen (Nederlands)
+// Locatie data met verbindingen en visuele scènes (Nederlands)
 const locations = {
     stage: {
         name: 'Hoofdpodium',
         emoji: '🎭',
-        description: 'Het hoofdpodium waar Freddy, Bonnie en Chica optreden voor de kinderen. Kleurrijke gordijnen hangen achter de animatronische band. 🎤🎸🎹',
-        animatronics: ['🐻 Freddy Fazbeer', '🐰 Bonnie het Konijn', '🐤 Chica de Kip'],
+        scene: `
+     🎭 HOOFDPODIUM 🎭
+    ═══════════════════
+    ┌─────────────────┐
+    │  🎵 ♪ ♫ 🎵 ♪   │
+    │                 │
+    │  🐻  🐰  🐤    │
+    │  ╱│╲ ╱│╲ ╱│╲   │
+    │  │   │   │     │
+    │ ═══════════════│
+    │   🎤  🎸  🎹   │
+    └─────────────────┘
+      🎪 🎈 🎉 🎈 🎪
+        `,
+        animatronics: ['🐻 Freddy', '🐰 Bonnie', '🐤 Chica'],
         connections: ['dining'],
         color: '#4a1a4a'
     },
     dining: {
         name: 'Eetzaal',
         emoji: '🍕',
-        description: 'Tafels en stoelen vullen deze grote ruimte. Pizzadozen en feesthoedjes liggen overal verspreid. De geur van oude pizza hangt in de lucht... 🎈🎂',
+        scene: `
+      🍕 EETZAAL 🍕
+    ═══════════════════
+    🎈          🎈
+    ┌───┐ ┌───┐ ┌───┐
+    │🍕 │ │🎂 │ │🍕 │
+    └─┬─┘ └─┬─┘ └─┬─┘
+      │     │     │
+    ┌───┐ ┌───┐ ┌───┐
+    │🪑 │ │🪑 │ │🪑 │
+    └───┘ └───┘ └───┘
+    🎉 Feesthoedjes 🎉
+        `,
         animatronics: [],
         connections: ['stage', 'westHall', 'eastHall', 'pirateCove'],
         color: '#3a2a1a'
@@ -821,7 +846,20 @@ const locations = {
     westHall: {
         name: 'West Gang',
         emoji: '🚪',
-        description: 'Een schemerige gang die naar het beveiligingskantoor leidt. Kindertekeningen bedekken de muren. Je hoort voetstappen in de verte... 👣',
+        scene: `
+      🚪 WEST GANG 🚪
+    ═══════════════════
+    │ 🖼️  🖼️  🖼️ │
+    │              │
+    │    ░░░░░░    │
+    │    ░    ░    │
+    │    ░ 👣 ░    │
+    │    ░    ░    │
+    │    ░░░░░░    │
+    │              │
+    │ 💡........💡 │
+    ← Kantoor    Eetzaal →
+        `,
         animatronics: [],
         connections: ['dining', 'westCorner', 'supplyCloset'],
         color: '#1a2a3a'
@@ -829,7 +867,21 @@ const locations = {
     westCorner: {
         name: 'West Hoek',
         emoji: '📸',
-        description: 'De hoek voor de linker deur van het beveiligingskantoor. Een beveiligingscamera kijkt van bovenaf mee. Het licht flikkert... 💡',
+        scene: `
+      📸 WEST HOEK 📸
+    ═══════════════════
+         [📹]
+           │
+    ┌──────┴──────┐
+    │             │
+    │   ╔═══╗    │
+    │   ║🚪 ║    │
+    │   ╚═══╝    │
+    │  KANTOOR   │
+    │    ←       │
+    └─────────────┘
+      💡 flikkert...
+        `,
         animatronics: [],
         connections: ['westHall', 'office'],
         color: '#1a1a2a'
@@ -837,7 +889,20 @@ const locations = {
     eastHall: {
         name: 'Oost Gang',
         emoji: '🚪',
-        description: 'Nog een gang met vervaagde posters aan de muren. "Vier feest!" staat erop. Er klopt iets niet hier... 🎪',
+        scene: `
+      🚪 OOST GANG 🚪
+    ═══════════════════
+    │ 🎪  🎪  🎪 │
+    │ VIER FEEST!│
+    │    ░░░░░░    │
+    │    ░    ░    │
+    │    ░    ░    │
+    │    ░    ░    │
+    │    ░░░░░░    │
+    │              │
+    │ 💡........💡 │
+    ← Eetzaal   Kantoor →
+        `,
         animatronics: [],
         connections: ['dining', 'eastCorner', 'restrooms'],
         color: '#1a3a2a'
@@ -845,7 +910,21 @@ const locations = {
     eastCorner: {
         name: 'Oost Hoek',
         emoji: '📸',
-        description: 'De hoek voor de rechter deur. Een motivatieposter zegt "Hou vol!" De ironie ontgaat je niet... 😰',
+        scene: `
+      📸 OOST HOEK 📸
+    ═══════════════════
+         [📹]
+           │
+    ┌──────┴──────┐
+    │   "HOU     │
+    │    VOL!"   │
+    │   ╔═══╗    │
+    │   ║🚪 ║    │
+    │   ╚═══╝    │
+    │  KANTOOR → │
+    └─────────────┘
+       😰 ...
+        `,
         animatronics: [],
         connections: ['eastHall', 'office'],
         color: '#2a1a2a'
@@ -853,7 +932,20 @@ const locations = {
     pirateCove: {
         name: 'Piraten Hoek',
         emoji: '🏴‍☠️',
-        description: 'Een speciaal podium met paarse gordijnen met sterren. "Sorry! Buiten Gebruik" - Foxy loert achter het gordijn... ⚓🗡️',
+        scene: `
+    🏴‍☠️ PIRATEN HOEK 🏴‍☠️
+    ═══════════════════
+    ┌─────────────────┐
+    │ ★  ★  ★  ★  ★  │
+    │╔═══════════════╗│
+    │║   BUITEN     ║│
+    │║   GEBRUIK    ║│
+    │║     🦊?      ║│
+    │║   ~~~~~~     ║│
+    │╚═══════════════╝│
+    └─────────────────┘
+      ⚓ 🗡️ ☠️ 🗡️ ⚓
+        `,
         animatronics: ['🦊 Foxy (achter gordijn)'],
         connections: ['dining'],
         color: '#4a1a2a'
@@ -861,7 +953,19 @@ const locations = {
     office: {
         name: 'Beveiligingskantoor',
         emoji: '🖥️',
-        description: 'Jouw werkplek. Monitoren, een bureauventilator en beveiligingscamera\'s. De deuren aan beide kanten zijn je enige bescherming. 🔒',
+        scene: `
+    🖥️ BEVEILIGINGSKANTOOR 🖥️
+    ═══════════════════════
+    🚪│   ┌─────────┐   │🚪
+      │   │📺 📺 📺│   │
+      │   │ ☕ 📋  │   │
+      │   │   🌀   │   │
+      │   │  (fan) │   │
+      │   └────────┘   │
+      │                │
+    ──┴────────────────┴──
+     🔒 VEILIG... toch? 🔒
+        `,
         animatronics: [],
         connections: ['westCorner', 'eastCorner'],
         color: '#2a2a3a'
@@ -869,7 +973,20 @@ const locations = {
     supplyCloset: {
         name: 'Voorraadkast',
         emoji: '🧹',
-        description: 'Een kleine kast vol schoonmaakspullen en reserveonderdelen. Is dat... een endoskelet in de hoek? 🤖💀',
+        scene: `
+      🧹 VOORRAADKAST 🧹
+    ═══════════════════
+    ┌─────────────────┐
+    │ 🧴 🧹 🪣 🧽  │
+    │                 │
+    │  ┌───┐         │
+    │  │🤖 │  ???    │
+    │  │💀 │         │
+    │  └───┘         │
+    │                 │
+    │ 🔧 ⚙️ 🔩      │
+    └─────────────────┘
+        `,
         animatronics: ['🤖 Reserve Endoskelet'],
         connections: ['westHall'],
         color: '#1a1a1a'
@@ -877,7 +994,19 @@ const locations = {
     restrooms: {
         name: 'Toiletten',
         emoji: '🚻',
-        description: 'Oude, flikkerende lampen verlichten vieze tegels. De spiegels zijn gebarsten. Je hoort druppelend water... 💧',
+        scene: `
+      🚻 TOILETTEN 🚻
+    ═══════════════════
+    💡~~~~~💡~~~~~💡
+    │ 🚹  │  🚺 │
+    │     │     │
+    │ ┌─┐ │ ┌─┐ │
+    │ │ │ │ │ │ │
+    │ └─┘ │ └─┘ │
+    │     │     │
+    ══════╧══════
+       💧 drip...
+        `,
         animatronics: [],
         connections: ['eastHall'],
         color: '#2a3a3a'
@@ -885,7 +1014,20 @@ const locations = {
     kitchen: {
         name: 'Keuken',
         emoji: '🍳',
-        description: 'CAMERA UITGESCHAKELD - Alleen audio. Je hoort pannen rammelen en iets... beweegt. Beter om niet te onderzoeken... 🔊❓',
+        scene: `
+      🍳 KEUKEN 🍳
+    ═══════════════════
+    ╔═════════════════╗
+    ║  ██████████████ ║
+    ║  █ CAMERA UIT █ ║
+    ║  ██████████████ ║
+    ║                 ║
+    ║   🔊 *KLANG*   ║
+    ║   🔊 *BONK*    ║
+    ║   🔊 *...???*  ║
+    ║                 ║
+    ╚═════════════════╝
+        `,
         animatronics: ['❓ Onbekende geluiden'],
         connections: ['dining'],
         color: '#3a3a1a'
@@ -893,7 +1035,21 @@ const locations = {
     backstage: {
         name: 'Backstage',
         emoji: '🎪',
-        description: 'Reservehoofden liggen op de planken. Lege animatronische pakken hangen aan de muur. Hun ogen lijken je te volgen... 👁️👁️',
+        scene: `
+      🎪 BACKSTAGE 🎪
+    ═══════════════════
+    ┌─────────────────┐
+    │ 👤  👤  👤  👤 │
+    │ (lege pakken)  │
+    │                 │
+    │ ┌───┬───┬───┐  │
+    │ │🗣️ │🗣️ │🗣️ │  │
+    │ │👁️ │👁️ │👁️ │  │
+    │ └───┴───┴───┘  │
+    │  (hoofden...)  │
+    └─────────────────┘
+     👁️ ze kijken... 👁️
+        `,
         animatronics: ['👤 Lege Pakken', '🗣️ Reservehoofden'],
         connections: ['stage'],
         color: '#2a1a3a'
@@ -913,7 +1069,9 @@ const freeRoamElements = {
     locationVisual: document.getElementById('location-visual'),
     locationAnimatronics: document.getElementById('location-animatronics'),
     navButtons: document.getElementById('nav-buttons'),
-    exitBtn: document.getElementById('freeroam-exit')
+    exitBtn: document.getElementById('freeroam-exit'),
+    walkTransition: document.getElementById('walk-transition'),
+    walkText: document.querySelector('.walk-text')
 };
 
 const freeRoamBtn = document.getElementById('freeroam-btn');
@@ -936,13 +1094,49 @@ function exitFreeRoam() {
     elements.startScreen.classList.remove('hidden');
 }
 
-// Move to a location
+// Move to a location with walking animation
+let isWalking = false;
+
 function moveToLocation(locationId) {
-    if (locations[locationId]) {
+    if (!locations[locationId] || isWalking) return;
+
+    const targetLocation = locations[locationId];
+    isWalking = true;
+
+    // Reset animations by removing and re-adding elements
+    const walkDoor = document.querySelector('.walk-door');
+    const walkChar = document.querySelector('.walk-character');
+
+    // Force animation restart
+    walkDoor.style.animation = 'none';
+    walkChar.style.animation = 'none';
+    void walkDoor.offsetWidth; // Trigger reflow
+    void walkChar.offsetWidth;
+    walkDoor.style.animation = '';
+    walkChar.style.animation = '';
+
+    // Show walking transition
+    freeRoamElements.walkText.textContent = `Lopen naar ${targetLocation.emoji} ${targetLocation.name}...`;
+    freeRoamElements.walkTransition.classList.remove('hidden');
+
+    // Play footstep sound
+    playSound('door');
+
+    // After animation completes, change location
+    setTimeout(() => {
         freeRoamState.currentLocation = locationId;
         updateFreeRoamView();
-        playSound('camera'); // Reuse camera sound for movement
-    }
+
+        // Hide transition with fade
+        freeRoamElements.walkTransition.style.animation = 'fadeOut 0.3s ease-out forwards';
+
+        setTimeout(() => {
+            freeRoamElements.walkTransition.classList.add('hidden');
+            freeRoamElements.walkTransition.style.animation = '';
+            isWalking = false;
+        }, 300);
+
+    }, 1500); // Match the walk animation duration
 }
 
 // Update the free roam view
@@ -951,11 +1145,13 @@ function updateFreeRoamView() {
 
     // Update location info
     freeRoamElements.locationName.textContent = `${loc.emoji} ${loc.name}`;
-    freeRoamElements.locationDescription.textContent = loc.description;
 
-    // Update visual
-    freeRoamElements.locationVisual.textContent = loc.emoji;
+    // Update visual met ASCII scene
+    freeRoamElements.locationVisual.innerHTML = `<pre class="location-scene">${loc.scene}</pre>`;
     freeRoamElements.locationVisual.style.background = `radial-gradient(ellipse at center, ${loc.color} 0%, #000 100%)`;
+
+    // Hide description, scene is now the visual
+    freeRoamElements.locationDescription.textContent = '';
 
     // Update aanwezige animatronics
     if (loc.animatronics.length > 0) {
@@ -1012,4 +1208,404 @@ document.addEventListener('keydown', (e) => {
     }
 });
 
-console.log('FNAF Browser Edition loaded! Press Start to play.');
+// ==========================================
+// MULTIPLAYER SYSTEM
+// ==========================================
+
+const multiplayerState = {
+    mode: null, // 'coop', 'versus', 'online'
+    role: null, // 'guard', 'animatronic'
+    peer: null,
+    connection: null,
+    myId: null,
+    moveCooldown: 0
+};
+
+// Multiplayer DOM Elements
+const mpElements = {
+    screen: document.getElementById('multiplayer-screen'),
+    lobbyScreen: document.getElementById('online-lobby-screen'),
+    versusHud: document.getElementById('versus-hud'),
+    coopHud: document.getElementById('coop-hud'),
+    lobbyCode: document.getElementById('my-lobby-code'),
+    joinInput: document.getElementById('join-code-input'),
+    connectionStatus: document.getElementById('connection-status'),
+    roleSelect: document.getElementById('online-role-select'),
+    cooldownDisplay: document.getElementById('move-cooldown')
+};
+
+// Multiplayer Buttons
+const mpBtn = document.getElementById('multiplayer-btn');
+const mpBackBtn = document.getElementById('mp-back-btn');
+const lobbyBackBtn = document.getElementById('lobby-back-btn');
+const startCoopBtn = document.getElementById('start-coop');
+const startVersusBtn = document.getElementById('start-versus');
+const startOnlineBtn = document.getElementById('start-online');
+const copyCodeBtn = document.getElementById('copy-code-btn');
+const joinLobbyBtn = document.getElementById('join-lobby-btn');
+const roleGuardBtn = document.getElementById('role-guard');
+const roleAnimBtn = document.getElementById('role-animatronic');
+const animBtns = document.querySelectorAll('.anim-btn');
+
+// Generate random lobby code
+function generateLobbyCode() {
+    const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+    let code = '';
+    for (let i = 0; i < 6; i++) {
+        code += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+    return code;
+}
+
+// Show Multiplayer Menu
+function showMultiplayerMenu() {
+    elements.startScreen.classList.add('hidden');
+    mpElements.screen.classList.remove('hidden');
+}
+
+// Hide Multiplayer Menu
+function hideMultiplayerMenu() {
+    mpElements.screen.classList.add('hidden');
+    elements.startScreen.classList.remove('hidden');
+}
+
+// ==========================================
+// LOCAL CO-OP MODE
+// ==========================================
+
+function startCoopMode() {
+    multiplayerState.mode = 'coop';
+    mpElements.screen.classList.add('hidden');
+    mpElements.coopHud.classList.remove('hidden');
+    startGame();
+}
+
+// Co-op keyboard controls (separate controls for each player)
+function handleCoopControls(e) {
+    if (!gameState.isPlaying || multiplayerState.mode !== 'coop') return;
+
+    const key = e.key.toLowerCase();
+
+    // Speler 1: Linker kant (WASD + Q/F)
+    if (key === 'q') {
+        toggleLeftDoor();
+    } else if (key === 'f' && gameState.officePosition === 'left') {
+        toggleLeftLight();
+    } else if (key === 'w' || key === 'a' || key === 's') {
+        gameState.officePosition = 'left';
+        updateOfficeView();
+    }
+
+    // Speler 2: Rechter kant (Pijltjes + [ / ] / \)
+    if (key === '[' || key === 'bracketleft') {
+        toggleRightDoor();
+    } else if (key === '\\' || key === 'backslash') {
+        toggleRightLight();
+    } else if (key === 'arrowup' || key === 'arrowdown' || key === 'arrowleft' || key === 'arrowright') {
+        gameState.officePosition = 'right';
+        updateOfficeView();
+    }
+
+    // Beide spelers kunnen camera's gebruiken
+    if (key === ' ') {
+        toggleCamera();
+    }
+}
+
+// ==========================================
+// VERSUS MODE (Guard vs Animatronics)
+// ==========================================
+
+function startVersusMode() {
+    multiplayerState.mode = 'versus';
+    multiplayerState.role = 'guard'; // Default, can switch
+    mpElements.screen.classList.add('hidden');
+    mpElements.versusHud.classList.remove('hidden');
+    startGame();
+
+    // Start cooldown timer
+    startMoveCooldownTimer();
+}
+
+let cooldownInterval;
+
+function startMoveCooldownTimer() {
+    cooldownInterval = setInterval(() => {
+        if (multiplayerState.moveCooldown > 0) {
+            multiplayerState.moveCooldown--;
+            mpElements.cooldownDisplay.textContent = `${multiplayerState.moveCooldown}s`;
+
+            // Enable buttons when cooldown ends
+            if (multiplayerState.moveCooldown === 0) {
+                mpElements.cooldownDisplay.textContent = 'Klaar!';
+                animBtns.forEach(btn => btn.disabled = false);
+            }
+        }
+    }, 1000);
+}
+
+function forceAnimatronicMove(animName) {
+    if (multiplayerState.moveCooldown > 0) return;
+
+    const anim = animatronics[animName];
+    if (!anim) return;
+
+    if (animName === 'foxy') {
+        // Foxy special: sprint direct naar de deur
+        animatronics.foxy.stage = 4;
+        foxyRun();
+        multiplayerState.moveCooldown = 15; // Langere cooldown voor Foxy
+    } else {
+        // Andere animatronics: forceer beweging
+        moveAnimatronic(anim);
+        multiplayerState.moveCooldown = 5;
+    }
+
+    // Disable buttons
+    animBtns.forEach(btn => btn.disabled = true);
+    mpElements.cooldownDisplay.textContent = `${multiplayerState.moveCooldown}s`;
+
+    playSound('door');
+}
+
+// ==========================================
+// ONLINE MULTIPLAYER (PeerJS)
+// ==========================================
+
+function showOnlineLobby() {
+    mpElements.screen.classList.add('hidden');
+    mpElements.lobbyScreen.classList.remove('hidden');
+
+    // Initialize PeerJS
+    initializePeer();
+}
+
+function hideOnlineLobby() {
+    mpElements.lobbyScreen.classList.add('hidden');
+    mpElements.screen.classList.remove('hidden');
+
+    // Cleanup peer connection
+    if (multiplayerState.peer) {
+        multiplayerState.peer.destroy();
+        multiplayerState.peer = null;
+    }
+}
+
+function initializePeer() {
+    const myCode = generateLobbyCode();
+    mpElements.lobbyCode.textContent = myCode;
+
+    try {
+        multiplayerState.peer = new Peer(myCode);
+
+        multiplayerState.peer.on('open', (id) => {
+            multiplayerState.myId = id;
+            mpElements.lobbyCode.textContent = id;
+            setConnectionStatus('Wachten op verbinding...', 'connecting');
+        });
+
+        multiplayerState.peer.on('connection', (conn) => {
+            handleConnection(conn);
+        });
+
+        multiplayerState.peer.on('error', (err) => {
+            console.error('Peer error:', err);
+            setConnectionStatus('Fout: ' + err.type, 'error');
+        });
+    } catch (e) {
+        setConnectionStatus('PeerJS niet beschikbaar', 'error');
+    }
+}
+
+function joinLobby() {
+    const code = mpElements.joinInput.value.toUpperCase().trim();
+    if (!code || code.length < 4) {
+        setConnectionStatus('Voer een geldige code in!', 'error');
+        return;
+    }
+
+    setConnectionStatus('Verbinden...', 'connecting');
+
+    const conn = multiplayerState.peer.connect(code);
+    handleConnection(conn);
+}
+
+function handleConnection(conn) {
+    multiplayerState.connection = conn;
+
+    conn.on('open', () => {
+        setConnectionStatus('🎮 Verbonden met ' + conn.peer + '!', 'connected');
+        mpElements.roleSelect.classList.remove('hidden');
+    });
+
+    conn.on('data', (data) => {
+        handleNetworkData(data);
+    });
+
+    conn.on('close', () => {
+        setConnectionStatus('Verbinding verbroken', 'error');
+        mpElements.roleSelect.classList.add('hidden');
+    });
+
+    conn.on('error', (err) => {
+        setConnectionStatus('Verbindingsfout: ' + err, 'error');
+    });
+}
+
+function setConnectionStatus(message, type) {
+    mpElements.connectionStatus.textContent = message;
+    mpElements.connectionStatus.className = 'connection-status ' + type;
+}
+
+function sendNetworkData(data) {
+    if (multiplayerState.connection && multiplayerState.connection.open) {
+        multiplayerState.connection.send(data);
+    }
+}
+
+function handleNetworkData(data) {
+    switch (data.type) {
+        case 'role':
+            // Andere speler heeft een rol gekozen
+            if (data.role === 'guard') {
+                multiplayerState.role = 'animatronic';
+            } else {
+                multiplayerState.role = 'guard';
+            }
+            startOnlineGame();
+            break;
+
+        case 'gameState':
+            // Synchroniseer game state
+            if (data.power !== undefined) gameState.power = data.power;
+            if (data.hour !== undefined) gameState.hour = data.hour;
+            if (data.leftDoor !== undefined) {
+                gameState.leftDoorClosed = data.leftDoor;
+                updateDoors();
+            }
+            if (data.rightDoor !== undefined) {
+                gameState.rightDoorClosed = data.rightDoor;
+                updateDoors();
+            }
+            break;
+
+        case 'animatronicMove':
+            // Andere speler laat animatronic bewegen
+            if (data.animatronic === 'foxy') {
+                animatronics.foxy.stage = 4;
+                foxyRun();
+            } else if (animatronics[data.animatronic]) {
+                moveAnimatronic(animatronics[data.animatronic]);
+            }
+            break;
+
+        case 'jumpscare':
+            jumpscare(animatronics[data.animatronic]);
+            break;
+
+        case 'victory':
+            victory();
+            break;
+    }
+}
+
+function startOnlineGame() {
+    multiplayerState.mode = 'online';
+    mpElements.lobbyScreen.classList.add('hidden');
+
+    if (multiplayerState.role === 'guard') {
+        startGame();
+    } else {
+        // Animatronic player
+        mpElements.versusHud.classList.remove('hidden');
+        elements.gameScreen.classList.remove('hidden');
+        startMoveCooldownTimer();
+    }
+}
+
+function selectRole(role) {
+    multiplayerState.role = role;
+    sendNetworkData({ type: 'role', role: role });
+    startOnlineGame();
+}
+
+function copyLobbyCode() {
+    const code = mpElements.lobbyCode.textContent;
+    navigator.clipboard.writeText(code).then(() => {
+        copyCodeBtn.textContent = '✓ Gekopieerd!';
+        setTimeout(() => {
+            copyCodeBtn.textContent = '📋 Kopieer Code';
+        }, 2000);
+    });
+}
+
+// ==========================================
+// MULTIPLAYER EVENT LISTENERS
+// ==========================================
+
+mpBtn.addEventListener('click', showMultiplayerMenu);
+mpBackBtn.addEventListener('click', hideMultiplayerMenu);
+lobbyBackBtn.addEventListener('click', hideOnlineLobby);
+startCoopBtn.addEventListener('click', startCoopMode);
+startVersusBtn.addEventListener('click', startVersusMode);
+startOnlineBtn.addEventListener('click', showOnlineLobby);
+copyCodeBtn.addEventListener('click', copyLobbyCode);
+joinLobbyBtn.addEventListener('click', joinLobby);
+roleGuardBtn.addEventListener('click', () => selectRole('guard'));
+roleAnimBtn.addEventListener('click', () => selectRole('animatronic'));
+
+// Animatronic control buttons
+animBtns.forEach(btn => {
+    btn.addEventListener('click', () => {
+        const animName = btn.dataset.anim;
+        forceAnimatronicMove(animName);
+
+        // Send to other player in online mode
+        if (multiplayerState.mode === 'online') {
+            sendNetworkData({ type: 'animatronicMove', animatronic: animName });
+        }
+    });
+});
+
+// Co-op keyboard handler
+document.addEventListener('keydown', handleCoopControls);
+
+// Sync game state in online mode
+setInterval(() => {
+    if (multiplayerState.mode === 'online' && multiplayerState.role === 'guard' && gameState.isPlaying) {
+        sendNetworkData({
+            type: 'gameState',
+            power: gameState.power,
+            hour: gameState.hour,
+            leftDoor: gameState.leftDoorClosed,
+            rightDoor: gameState.rightDoorClosed
+        });
+    }
+}, 1000);
+
+// Cleanup on game end
+const originalVictory = victory;
+victory = function() {
+    originalVictory();
+    mpElements.versusHud.classList.add('hidden');
+    mpElements.coopHud.classList.add('hidden');
+    if (cooldownInterval) clearInterval(cooldownInterval);
+
+    if (multiplayerState.mode === 'online') {
+        sendNetworkData({ type: 'victory' });
+    }
+};
+
+const originalJumpscare = jumpscare;
+jumpscare = function(animatronic) {
+    originalJumpscare(animatronic);
+    mpElements.versusHud.classList.add('hidden');
+    mpElements.coopHud.classList.add('hidden');
+    if (cooldownInterval) clearInterval(cooldownInterval);
+
+    if (multiplayerState.mode === 'online' && multiplayerState.role === 'guard') {
+        sendNetworkData({ type: 'jumpscare', animatronic: animatronic.name });
+    }
+};
+
+console.log('FNAF Browser Edition + Multiplayer loaded! Druk op Start om te spelen.');
