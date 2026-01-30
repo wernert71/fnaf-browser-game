@@ -1192,6 +1192,29 @@ if (freeRoamExit3D) {
     freeRoamExit3D.addEventListener('click', exitFreeRoam);
 }
 
+// ==========================================
+// SURVIVAL MODE
+// ==========================================
+
+const survivalBtn = document.getElementById('survival-btn');
+
+function startSurvival() {
+    freeRoamState.active = true;
+    freeRoamState.currentLocation = 'stage';
+
+    elements.startScreen.classList.add('hidden');
+    freeRoamElements.screen.classList.remove('hidden');
+
+    // Start 3D survival mode
+    if (typeof startSurvivalMode3D === 'function') {
+        startSurvivalMode3D(1); // difficulty 1
+    }
+}
+
+if (survivalBtn) {
+    survivalBtn.addEventListener('click', startSurvival);
+}
+
 // Keyboard navigation for free roam
 document.addEventListener('keydown', (e) => {
     if (!freeRoamState.active) return;
@@ -1406,16 +1429,31 @@ function hideOnlineLobby() {
 }
 
 function initializePeer() {
+    // Cleanup existing peer first
+    if (multiplayerState.peer) {
+        multiplayerState.peer.destroy();
+        multiplayerState.peer = null;
+    }
+
     const myCode = generateLobbyCode();
     mpElements.lobbyCode.textContent = myCode;
+    setConnectionStatus('Peer initialiseren...', 'connecting');
 
     try {
-        multiplayerState.peer = new Peer(myCode);
+        // Check if PeerJS is available
+        if (typeof Peer === 'undefined') {
+            setConnectionStatus('PeerJS bibliotheek niet geladen!', 'error');
+            return;
+        }
+
+        multiplayerState.peer = new Peer(myCode, {
+            debug: 1 // Show warnings
+        });
 
         multiplayerState.peer.on('open', (id) => {
             multiplayerState.myId = id;
             mpElements.lobbyCode.textContent = id;
-            setConnectionStatus('Wachten op verbinding...', 'connecting');
+            setConnectionStatus('✅ Klaar! Wachten op verbinding...', 'connecting');
         });
 
         multiplayerState.peer.on('connection', (conn) => {
@@ -1424,10 +1462,27 @@ function initializePeer() {
 
         multiplayerState.peer.on('error', (err) => {
             console.error('Peer error:', err);
-            setConnectionStatus('Fout: ' + err.type, 'error');
+            if (err.type === 'unavailable-id') {
+                // ID already taken, generate new one
+                setConnectionStatus('Code al in gebruik, nieuwe genereren...', 'connecting');
+                setTimeout(() => initializePeer(), 1000);
+            } else if (err.type === 'peer-unavailable') {
+                setConnectionStatus('Speler niet gevonden! Check de code.', 'error');
+            } else if (err.type === 'network') {
+                setConnectionStatus('Netwerkfout - check je internet', 'error');
+            } else {
+                setConnectionStatus('Fout: ' + err.type, 'error');
+            }
         });
+
+        multiplayerState.peer.on('disconnected', () => {
+            setConnectionStatus('Verbinding verbroken, opnieuw verbinden...', 'connecting');
+            multiplayerState.peer.reconnect();
+        });
+
     } catch (e) {
-        setConnectionStatus('PeerJS niet beschikbaar', 'error');
+        console.error('Peer init error:', e);
+        setConnectionStatus('PeerJS niet beschikbaar: ' + e.message, 'error');
     }
 }
 
@@ -1438,30 +1493,79 @@ function joinLobby() {
         return;
     }
 
-    setConnectionStatus('Verbinden...', 'connecting');
+    // Check if our peer is ready
+    if (!multiplayerState.peer || !multiplayerState.peer.open) {
+        setConnectionStatus('Even wachten, peer nog niet klaar...', 'connecting');
+        setTimeout(() => joinLobby(), 500);
+        return;
+    }
 
-    const conn = multiplayerState.peer.connect(code);
-    handleConnection(conn);
+    // Don't connect to yourself
+    if (code === multiplayerState.myId) {
+        setConnectionStatus('Je kunt niet met jezelf verbinden!', 'error');
+        return;
+    }
+
+    setConnectionStatus('Verbinden met ' + code + '...', 'connecting');
+
+    try {
+        const conn = multiplayerState.peer.connect(code, {
+            reliable: true
+        });
+
+        if (conn) {
+            handleConnection(conn);
+        } else {
+            setConnectionStatus('Kon geen verbinding maken', 'error');
+        }
+    } catch (e) {
+        console.error('Connect error:', e);
+        setConnectionStatus('Verbindingsfout: ' + e.message, 'error');
+    }
 }
 
 function handleConnection(conn) {
     multiplayerState.connection = conn;
 
+    // Connection timeout
+    const connectionTimeout = setTimeout(() => {
+        if (!conn.open) {
+            setConnectionStatus('Verbinding timeout - probeer opnieuw', 'error');
+        }
+    }, 10000);
+
     conn.on('open', () => {
+        clearTimeout(connectionTimeout);
         setConnectionStatus('🎮 Verbonden met ' + conn.peer + '!', 'connected');
         mpElements.roleSelect.classList.remove('hidden');
+
+        // Send a ping to confirm connection
+        conn.send({ type: 'ping' });
     });
 
     conn.on('data', (data) => {
+        // Handle ping/pong for connection test
+        if (data.type === 'ping') {
+            conn.send({ type: 'pong' });
+            return;
+        }
+        if (data.type === 'pong') {
+            console.log('Connection confirmed!');
+            return;
+        }
         handleNetworkData(data);
     });
 
     conn.on('close', () => {
+        clearTimeout(connectionTimeout);
         setConnectionStatus('Verbinding verbroken', 'error');
         mpElements.roleSelect.classList.add('hidden');
+        multiplayerState.connection = null;
     });
 
     conn.on('error', (err) => {
+        clearTimeout(connectionTimeout);
+        console.error('Connection error:', err);
         setConnectionStatus('Verbindingsfout: ' + err, 'error');
     });
 }
