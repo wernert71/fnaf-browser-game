@@ -1115,12 +1115,21 @@ let isWalking = false;
 function moveToLocation(locationId) {
     if (!locations[locationId] || isWalking) return;
 
+    // Skip 2D navigation in 3D mode
+    if (freeRoamState.is3DMode) return;
+
     const targetLocation = locations[locationId];
     isWalking = true;
 
     // Reset animations by removing and re-adding elements
     const walkDoor = document.querySelector('.walk-door');
     const walkChar = document.querySelector('.walk-character');
+
+    // Check if 2D elements exist
+    if (!walkDoor || !walkChar || !freeRoamElements.walkTransition) {
+        isWalking = false;
+        return;
+    }
 
     // Force animation restart
     walkDoor.style.animation = 'none';
@@ -1131,7 +1140,9 @@ function moveToLocation(locationId) {
     walkChar.style.animation = '';
 
     // Show walking transition
-    freeRoamElements.walkText.textContent = `Lopen naar ${targetLocation.emoji} ${targetLocation.name}...`;
+    if (freeRoamElements.walkText) {
+        freeRoamElements.walkText.textContent = `Lopen naar ${targetLocation.emoji} ${targetLocation.name}...`;
+    }
     freeRoamElements.walkTransition.classList.remove('hidden');
 
     // Play footstep sound
@@ -1154,8 +1165,12 @@ function moveToLocation(locationId) {
     }, 1500); // Match the walk animation duration
 }
 
-// Update the free roam view
+// Update the free roam view (2D mode only)
 function updateFreeRoamView() {
+    // Skip if in 3D mode or elements don't exist
+    if (freeRoamState.is3DMode) return;
+    if (!freeRoamElements.locationName || !freeRoamElements.locationVisual) return;
+
     const loc = locations[freeRoamState.currentLocation];
 
     // Update location info
@@ -1166,32 +1181,42 @@ function updateFreeRoamView() {
     freeRoamElements.locationVisual.style.background = `radial-gradient(ellipse at center, ${loc.color} 0%, #000 100%)`;
 
     // Hide description, scene is now the visual
-    freeRoamElements.locationDescription.textContent = '';
+    if (freeRoamElements.locationDescription) {
+        freeRoamElements.locationDescription.textContent = '';
+    }
 
     // Update aanwezige animatronics
-    if (loc.animatronics.length > 0) {
-        freeRoamElements.locationAnimatronics.innerHTML =
-            '<p class="animatronics-label">⚠️ Hier aanwezig:</p>' +
-            loc.animatronics.map(a => `<span class="animatronic-tag">${a}</span>`).join('');
-    } else {
-        freeRoamElements.locationAnimatronics.innerHTML = '<p class="empty-room">De ruimte lijkt leeg... 👻</p>';
+    if (freeRoamElements.locationAnimatronics) {
+        if (loc.animatronics.length > 0) {
+            freeRoamElements.locationAnimatronics.innerHTML =
+                '<p class="animatronics-label">⚠️ Hier aanwezig:</p>' +
+                loc.animatronics.map(a => `<span class="animatronic-tag">${a}</span>`).join('');
+        } else {
+            freeRoamElements.locationAnimatronics.innerHTML = '<p class="empty-room">De ruimte lijkt leeg... 👻</p>';
+        }
     }
 
     // Update navigation buttons
-    freeRoamElements.navButtons.innerHTML = '';
-    loc.connections.forEach(connId => {
-        const connLoc = locations[connId];
-        const btn = document.createElement('button');
-        btn.className = 'nav-btn';
-        btn.textContent = `${connLoc.emoji} ${connLoc.name}`;
-        btn.onclick = () => moveToLocation(connId);
-        freeRoamElements.navButtons.appendChild(btn);
-    });
+    if (freeRoamElements.navButtons) {
+        freeRoamElements.navButtons.innerHTML = '';
+        loc.connections.forEach(connId => {
+            const connLoc = locations[connId];
+            const btn = document.createElement('button');
+            btn.className = 'nav-btn';
+            btn.textContent = `${connLoc.emoji} ${connLoc.name}`;
+            btn.onclick = () => moveToLocation(connId);
+            freeRoamElements.navButtons.appendChild(btn);
+        });
+    }
 }
 
 // Free Roam Event Listeners
 freeRoamBtn.addEventListener('click', startFreeRoam);
-freeRoamElements.exitBtn.addEventListener('click', exitFreeRoam);
+
+// 2D Free Roam exit button (if it exists)
+if (freeRoamElements.exitBtn) {
+    freeRoamElements.exitBtn.addEventListener('click', exitFreeRoam);
+}
 
 // 3D Free Roam exit button
 if (freeRoamExit3D) {
