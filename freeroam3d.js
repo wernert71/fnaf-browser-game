@@ -41,6 +41,7 @@ class FNAFWorld {
         this.headBob = 0;
         this.footstepTimer = 0;
         this.isMoving = false;
+        this.isTransitioning = false; // Prevent rapid door transitions
 
         // Room definitions with connections and doorway positions
         this.roomData = {
@@ -274,8 +275,8 @@ class FNAFWorld {
 
         // Scene setup
         this.scene = new THREE.Scene();
-        this.scene.background = new THREE.Color(0x000000);
-        this.scene.fog = new THREE.FogExp2(0x000000, 0.08);
+        this.scene.background = new THREE.Color(0x050508);
+        this.scene.fog = new THREE.FogExp2(0x050508, 0.025); // Less fog for better visibility
 
         // Camera setup - First person view
         this.camera = new THREE.PerspectiveCamera(
@@ -296,12 +297,16 @@ class FNAFWorld {
         this.renderer.shadowMap.enabled = true;
         this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
         this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
-        this.renderer.toneMappingExposure = 0.8;
+        this.renderer.toneMappingExposure = 1.2; // Brighter exposure
         container.appendChild(this.renderer.domElement);
 
-        // Ambient light (very dim)
-        const ambient = new THREE.AmbientLight(0x111122, 0.3);
+        // Ambient light (brighter for better visibility)
+        const ambient = new THREE.AmbientLight(0x334455, 0.8);
         this.scene.add(ambient);
+
+        // Global hemisphere light for outdoor feel
+        const hemi = new THREE.HemisphereLight(0x8899aa, 0x222233, 0.4);
+        this.scene.add(hemi);
 
         // Build initial room
         this.buildRoom('stage');
@@ -543,33 +548,68 @@ class FNAFWorld {
     buildDoorways(data, height) {
         if (!data.doorways) return;
 
-        const doorFrameMat = new THREE.MeshStandardMaterial({
-            color: 0x3a2a1a,
-            roughness: 0.7
-        });
-
         data.doorways.forEach(doorway => {
-            const doorWidth = 1.8;
-            const doorHeight = 2.5;
+            const doorWidth = 2.0;
+            const doorHeight = 2.8;
 
-            // Door frame
-            const frameGeo = new THREE.BoxGeometry(doorWidth + 0.3, doorHeight + 0.2, 0.3);
-            const frame = new THREE.Mesh(frameGeo, doorFrameMat);
-            frame.position.set(doorway.position.x, doorHeight / 2, doorway.position.z);
-            frame.rotation.y = doorway.rotation;
-            this.scene.add(frame);
+            // Door frame - wooden frame around opening
+            const frameMat = new THREE.MeshStandardMaterial({
+                color: 0x5a3a1a,
+                roughness: 0.6
+            });
 
-            // Door opening (darker area suggesting passage)
+            // Top frame
+            const topFrameGeo = new THREE.BoxGeometry(doorWidth + 0.4, 0.2, 0.25);
+            const topFrame = new THREE.Mesh(topFrameGeo, frameMat);
+            topFrame.position.set(doorway.position.x, doorHeight, doorway.position.z);
+            topFrame.rotation.y = doorway.rotation;
+            this.scene.add(topFrame);
+
+            // Left frame
+            const sideFrameGeo = new THREE.BoxGeometry(0.15, doorHeight, 0.25);
+            const leftFrame = new THREE.Mesh(sideFrameGeo, frameMat);
+            const rightFrame = new THREE.Mesh(sideFrameGeo, frameMat);
+
+            // Calculate offset based on rotation
+            const offsetX = Math.cos(doorway.rotation + Math.PI / 2) * (doorWidth / 2 + 0.1);
+            const offsetZ = Math.sin(doorway.rotation + Math.PI / 2) * (doorWidth / 2 + 0.1);
+
+            leftFrame.position.set(
+                doorway.position.x - offsetX,
+                doorHeight / 2,
+                doorway.position.z - offsetZ
+            );
+            leftFrame.rotation.y = doorway.rotation;
+            this.scene.add(leftFrame);
+
+            rightFrame.position.set(
+                doorway.position.x + offsetX,
+                doorHeight / 2,
+                doorway.position.z + offsetZ
+            );
+            rightFrame.rotation.y = doorway.rotation;
+            this.scene.add(rightFrame);
+
+            // Door opening - visible dark passage suggesting another room
             const openingMat = new THREE.MeshBasicMaterial({
-                color: 0x050505,
+                color: 0x0a0a12,
                 transparent: true,
-                opacity: 0.9
+                opacity: 0.85
             });
             const openingGeo = new THREE.PlaneGeometry(doorWidth, doorHeight);
             const opening = new THREE.Mesh(openingGeo, openingMat);
             opening.position.set(doorway.position.x, doorHeight / 2, doorway.position.z);
             opening.rotation.y = doorway.rotation;
             this.scene.add(opening);
+
+            // Glowing floor strip at doorway (like EXIT path lighting)
+            const stripMat = new THREE.MeshBasicMaterial({ color: 0x44ff44 });
+            const stripGeo = new THREE.PlaneGeometry(doorWidth - 0.2, 0.3);
+            const strip = new THREE.Mesh(stripGeo, stripMat);
+            strip.rotation.x = -Math.PI / 2;
+            strip.rotation.z = doorway.rotation;
+            strip.position.set(doorway.position.x, 0.02, doorway.position.z);
+            this.scene.add(strip);
 
             // Store doorway for collision/interaction
             this.doorways.push({
@@ -582,7 +622,7 @@ class FNAFWorld {
                 }
             });
 
-            // Add sign above door
+            // Add illuminated sign above door
             this.addDoorSign(doorway, doorHeight);
         });
     }
@@ -591,37 +631,66 @@ class FNAFWorld {
         const targetRoom = this.roomData[doorway.to];
         if (!targetRoom) return;
 
-        // Glowing sign
-        const signMat = new THREE.MeshBasicMaterial({
-            color: 0x00ff00,
-            transparent: true,
-            opacity: 0.8
-        });
-        const signGeo = new THREE.PlaneGeometry(1.5, 0.3);
-        const sign = new THREE.Mesh(signGeo, signMat);
-        sign.position.set(
+        // EXIT-style illuminated sign box
+        const signBoxMat = new THREE.MeshStandardMaterial({ color: 0x222222 });
+        const signBoxGeo = new THREE.BoxGeometry(2, 0.5, 0.15);
+        const signBox = new THREE.Mesh(signBoxGeo, signBoxMat);
+        signBox.position.set(
             doorway.position.x,
-            doorHeight + 0.4,
-            doorway.position.z + 0.2
+            doorHeight + 0.35,
+            doorway.position.z
+        );
+        signBox.rotation.y = doorway.rotation;
+        this.scene.add(signBox);
+
+        // Glowing sign face
+        const signMat = new THREE.MeshBasicMaterial({
+            color: 0x00ff66,
+            transparent: true,
+            opacity: 0.95
+        });
+        const signGeo = new THREE.PlaneGeometry(1.8, 0.4);
+        const sign = new THREE.Mesh(signGeo, signMat);
+
+        // Position slightly in front of sign box
+        const signOffsetX = Math.sin(doorway.rotation) * 0.08;
+        const signOffsetZ = Math.cos(doorway.rotation) * 0.08;
+        sign.position.set(
+            doorway.position.x + signOffsetX,
+            doorHeight + 0.35,
+            doorway.position.z + signOffsetZ
         );
         sign.rotation.y = doorway.rotation;
         this.scene.add(sign);
 
-        // Add light near sign
-        const signLight = new THREE.PointLight(0x00ff00, 0.3, 3);
+        // Bright light illuminating the doorway
+        const signLight = new THREE.PointLight(0x44ff66, 1.0, 6);
         signLight.position.set(
             doorway.position.x,
             doorHeight + 0.5,
             doorway.position.z
         );
         this.scene.add(signLight);
+
+        // Additional warm light inside doorway
+        const innerLight = new THREE.PointLight(0xffaa66, 0.6, 4);
+        const innerOffsetX = -Math.sin(doorway.rotation) * 1;
+        const innerOffsetZ = -Math.cos(doorway.rotation) * 1;
+        innerLight.position.set(
+            doorway.position.x + innerOffsetX,
+            2,
+            doorway.position.z + innerOffsetZ
+        );
+        this.scene.add(innerLight);
     }
 
     addRoomLighting(roomId, data) {
         const height = data.size.height;
+        const width = data.size.width;
+        const depth = data.size.depth;
 
-        // Main ceiling light
-        const mainLight = new THREE.PointLight(0xffaa66, 0.6, 15);
+        // Main ceiling light (BRIGHTER)
+        const mainLight = new THREE.PointLight(0xffeedd, 1.2, 25);
         mainLight.position.set(0, height - 0.5, 0);
         mainLight.castShadow = true;
         mainLight.shadow.mapSize.width = 512;
@@ -629,17 +698,40 @@ class FNAFWorld {
         this.scene.add(mainLight);
         this.lights.main = mainLight;
 
-        // Flickering effect
+        // Additional ceiling lights spread across room
+        const numLightsX = Math.ceil(width / 8);
+        const numLightsZ = Math.ceil(depth / 8);
+        for (let i = 0; i < numLightsX; i++) {
+            for (let j = 0; j < numLightsZ; j++) {
+                const extraLight = new THREE.PointLight(0xffffee, 0.6, 12);
+                extraLight.position.set(
+                    -width / 2 + (i + 0.5) * (width / numLightsX),
+                    height - 0.8,
+                    -depth / 2 + (j + 0.5) * (depth / numLightsZ)
+                );
+                this.scene.add(extraLight);
+
+                // Visible light fixture
+                const fixtureMat = new THREE.MeshBasicMaterial({ color: 0xffffaa });
+                const fixtureGeo = new THREE.BoxGeometry(0.6, 0.1, 0.3);
+                const fixture = new THREE.Mesh(fixtureGeo, fixtureMat);
+                fixture.position.copy(extraLight.position);
+                fixture.position.y = height - 0.05;
+                this.scene.add(fixture);
+            }
+        }
+
+        // Subtle flickering effect (less intense)
         this.startLightFlicker();
 
         // Room-specific lighting
         switch (roomId) {
             case 'stage':
-                // Spotlights on stage
+                // Bright spotlights on stage
                 const colors = [0xff0066, 0x0066ff, 0x00ff66];
                 colors.forEach((color, i) => {
-                    const spot = new THREE.SpotLight(color, 0.8, 15, Math.PI / 6);
-                    spot.position.set(-4 + i * 4, height - 1, 0);
+                    const spot = new THREE.SpotLight(color, 1.5, 20, Math.PI / 5);
+                    spot.position.set(-4 + i * 4, height - 1, 2);
                     spot.target.position.set(-4 + i * 4, 0, -5);
                     this.scene.add(spot);
                     this.scene.add(spot.target);
@@ -647,22 +739,59 @@ class FNAFWorld {
                 break;
 
             case 'pirateCove':
-                const purpleLight = new THREE.PointLight(0x6600ff, 0.4, 8);
+                const purpleLight = new THREE.PointLight(0x9900ff, 0.8, 12);
                 purpleLight.position.set(0, 3, -2);
                 this.scene.add(purpleLight);
+                // Extra atmosphere light
+                const redLight = new THREE.PointLight(0xff3300, 0.4, 8);
+                redLight.position.set(-3, 2, 0);
+                this.scene.add(redLight);
                 break;
 
             case 'kitchen':
-                // Kitchen is very dark
-                mainLight.intensity = 0.15;
+                // Kitchen is darker but still visible
+                mainLight.intensity = 0.5;
+                // Stove glow
+                const stoveGlow = new THREE.PointLight(0xff6600, 0.4, 5);
+                stoveGlow.position.set(-3, 0.5, -depth / 2 + 1);
+                this.scene.add(stoveGlow);
                 break;
 
             case 'office':
-                // Monitor glow
-                const monitorGlow = new THREE.PointLight(0x004400, 0.5, 5);
+                // Monitor glow (brighter)
+                const monitorGlow = new THREE.PointLight(0x00ff00, 0.8, 8);
                 monitorGlow.position.set(0, 1.5, -2);
                 this.scene.add(monitorGlow);
+                // Red button lights
+                const redBtn = new THREE.PointLight(0xff0000, 0.3, 3);
+                redBtn.position.set(-4, 1.2, 0);
+                this.scene.add(redBtn);
+                const redBtn2 = new THREE.PointLight(0xff0000, 0.3, 3);
+                redBtn2.position.set(4, 1.2, 0);
+                this.scene.add(redBtn2);
                 break;
+
+            case 'backstage':
+                // Eerie red light
+                const eerieLight = new THREE.PointLight(0xff2200, 0.5, 10);
+                eerieLight.position.set(0, 2, -2);
+                this.scene.add(eerieLight);
+                break;
+
+            case 'supplyCloset':
+                // Single dim bulb
+                mainLight.intensity = 0.8;
+                mainLight.color.setHex(0xffcc88);
+                break;
+        }
+
+        // Door lights - illuminate doorways
+        if (data.doorways) {
+            data.doorways.forEach(doorway => {
+                const doorLight = new THREE.PointLight(0x88ff88, 0.6, 5);
+                doorLight.position.set(doorway.position.x, 2.8, doorway.position.z);
+                this.scene.add(doorLight);
+            });
         }
     }
 
@@ -670,20 +799,17 @@ class FNAFWorld {
         const flicker = () => {
             if (!this.isActive || !this.lights.main) return;
 
-            // Random flicker with occasional complete blackout
+            // Subtle flicker (less dramatic)
             const rand = Math.random();
-            if (rand < 0.02) {
-                // Blackout
-                this.lights.main.intensity = 0.1;
-            } else if (rand < 0.1) {
-                // Dim
-                this.lights.main.intensity = 0.3 + Math.random() * 0.2;
+            if (rand < 0.01) {
+                // Rare brief dim
+                this.lights.main.intensity = 0.8;
             } else {
                 // Normal with slight variation
-                this.lights.main.intensity = 0.5 + Math.random() * 0.2;
+                this.lights.main.intensity = 1.1 + Math.random() * 0.2;
             }
 
-            setTimeout(flicker, 50 + Math.random() * 150);
+            setTimeout(flicker, 100 + Math.random() * 300);
         };
         flicker();
     }
@@ -1488,7 +1614,7 @@ class FNAFWorld {
     updateUI(data) {
         const nameEl = document.getElementById('location-name-3d');
         const animEl = document.getElementById('location-animatronics-3d');
-        const navEl = document.getElementById('nav-buttons-3d');
+        const hintEl = document.getElementById('door-hint-3d');
 
         if (nameEl) {
             nameEl.textContent = `${data.emoji} ${data.name}`;
@@ -1506,20 +1632,16 @@ class FNAFWorld {
             }
         }
 
-        if (navEl) {
-            navEl.innerHTML = '';
-            if (data.doorways) {
-                data.doorways.forEach(doorway => {
-                    const connData = this.roomData[doorway.to];
-                    if (connData) {
-                        const btn = document.createElement('button');
-                        btn.className = 'nav-btn-3d';
-                        btn.textContent = `${connData.emoji} ${connData.name}`;
-                        btn.onclick = () => this.goToRoom(doorway.to);
-                        navEl.appendChild(btn);
-                    }
-                });
-            }
+        // Hide door hint when entering new room
+        if (hintEl) {
+            hintEl.classList.remove('visible');
+        }
+    }
+
+    hideDoorHint() {
+        const hintEl = document.getElementById('door-hint-3d');
+        if (hintEl) {
+            hintEl.classList.remove('visible');
         }
     }
 
@@ -1543,19 +1665,76 @@ class FNAFWorld {
     }
 
     checkDoorwayCollision() {
-        if (!this.camera) return;
+        if (!this.camera || this.isTransitioning) return;
 
         const playerPos = this.camera.position;
+        let nearDoor = false;
 
         for (const doorway of this.doorways) {
             const distX = Math.abs(playerPos.x - doorway.position.x);
             const distZ = Math.abs(playerPos.z - doorway.position.z);
 
-            // Check if player is near doorway
-            if (distX < 1.5 && distZ < 1.5) {
-                // Show hint or auto-transition
-                // For now, just highlight the UI
+            // Check if player walks through doorway (trigger zone)
+            if (distX < 1.2 && distZ < 1.0) {
+                // Trigger room transition!
+                this.walkThroughDoor(doorway.to);
+                return;
             }
+
+            // Show proximity hint when near door
+            if (distX < 3.0 && distZ < 3.0) {
+                this.showDoorHint(doorway.to);
+                nearDoor = true;
+            }
+        }
+
+        // Hide hint if not near any door
+        if (!nearDoor) {
+            this.hideDoorHint();
+        }
+    }
+
+    walkThroughDoor(roomId) {
+        if (this.isTransitioning) return;
+        this.isTransitioning = true;
+
+        // Play door sound
+        if (typeof playSound === 'function') {
+            playSound('door');
+        }
+
+        // Screen fade effect
+        const container = document.getElementById('threejs-container');
+        if (container) {
+            container.style.transition = 'opacity 0.3s';
+            container.style.opacity = '0';
+
+            setTimeout(() => {
+                this.buildRoom(roomId);
+                container.style.opacity = '1';
+
+                // Cooldown before next transition
+                setTimeout(() => {
+                    this.isTransitioning = false;
+                }, 500);
+            }, 300);
+        } else {
+            this.buildRoom(roomId);
+            setTimeout(() => {
+                this.isTransitioning = false;
+            }, 500);
+        }
+    }
+
+    showDoorHint(roomId) {
+        const targetRoom = this.roomData[roomId];
+        if (!targetRoom) return;
+
+        // Update hint text (optional visual feedback)
+        const hintEl = document.getElementById('door-hint-3d');
+        if (hintEl) {
+            hintEl.textContent = `→ ${targetRoom.emoji} ${targetRoom.name}`;
+            hintEl.classList.add('visible');
         }
     }
 
