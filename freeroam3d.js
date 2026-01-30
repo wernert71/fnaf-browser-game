@@ -306,15 +306,15 @@ class FNAFWorld {
         this.renderer.shadowMap.enabled = true;
         this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
         this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
-        this.renderer.toneMappingExposure = 2.0; // Bright daylight exposure
+        this.renderer.toneMappingExposure = 3.0; // Very bright daylight exposure
         container.appendChild(this.renderer.domElement);
 
-        // Ambient light - bright white for daylight (lightsOn defaults to true)
-        const ambient = new THREE.AmbientLight(0xffffff, 2.5);
+        // Ambient light - very bright white for full daylight
+        const ambient = new THREE.AmbientLight(0xffffff, 5.0);
         this.scene.add(ambient);
 
-        // Global hemisphere light - bright for daylight feel
-        const hemi = new THREE.HemisphereLight(0xffffff, 0xffffee, 1.5);
+        // Global hemisphere light - maximum brightness
+        const hemi = new THREE.HemisphereLight(0xffffff, 0xffffff, 3.0);
         this.scene.add(hemi);
 
         // Build initial room
@@ -720,8 +720,8 @@ class FNAFWorld {
         const width = data.size.width;
         const depth = data.size.depth;
 
-        // Main ceiling light (BRIGHT - daylight default)
-        const mainLight = new THREE.PointLight(0xffeedd, 3.6, 25); // 1.2 * 3.0 for daylight
+        // Main ceiling light (VERY BRIGHT - daylight default)
+        const mainLight = new THREE.PointLight(0xffffff, 8.0, 50); // Very bright for daylight
         mainLight.position.set(0, height - 0.5, 0);
         mainLight.castShadow = true;
         mainLight.shadow.mapSize.width = 512;
@@ -736,7 +736,7 @@ class FNAFWorld {
         const numLightsZ = Math.ceil(depth / 8);
         for (let i = 0; i < numLightsX; i++) {
             for (let j = 0; j < numLightsZ; j++) {
-                const extraLight = new THREE.PointLight(0xffffee, 1.8, 12); // 0.6 * 3.0 for daylight
+                const extraLight = new THREE.PointLight(0xffffff, 5.0, 20); // Very bright for daylight
                 extraLight.position.set(
                     -width / 2 + (i + 0.5) * (width / numLightsX),
                     height - 0.8,
@@ -949,10 +949,10 @@ class FNAFWorld {
             }
         });
 
-        // Toggle room lights intensity - MUCH brighter when on (daylight effect)
-        const targetIntensity = this.lightsOn ? 3.0 : 0.05;
-        const ambientTarget = this.lightsOn ? 2.5 : 0.1;
-        const hemiTarget = this.lightsOn ? 1.5 : 0.4;
+        // Toggle room lights intensity - VERY bright when on (full daylight)
+        const targetIntensity = this.lightsOn ? 8.0 : 0.05;
+        const ambientTarget = this.lightsOn ? 5.0 : 0.1;
+        const hemiTarget = this.lightsOn ? 3.0 : 0.2;
 
         this.roomLights.forEach(light => {
             // Animate light transition
@@ -994,7 +994,7 @@ class FNAFWorld {
 
         // Adjust renderer exposure for daylight effect
         if (this.renderer) {
-            this.renderer.toneMappingExposure = this.lightsOn ? 2.0 : 1.2;
+            this.renderer.toneMappingExposure = this.lightsOn ? 3.0 : 0.8;
         }
 
         // Show feedback message
