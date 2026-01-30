@@ -367,6 +367,9 @@ class FNAFWorld {
                 // Toggle flashlight
                 if (this.survivalMode && this.survivalMode.isActive) {
                     this.survivalMode.toggleFlashlight();
+                } else {
+                    // Flashlight in free roam mode (unlimited battery)
+                    this.toggleFreeRoamFlashlight();
                 }
             }
         });
@@ -2151,16 +2154,18 @@ class FNAFWorld {
     }
 
     createSurvivalHUD() {
-        // Create survival HUD overlay
+        // Show survival HUD overlay
         let hud = document.getElementById('survival-hud');
-        if (!hud) {
+        if (hud) {
+            hud.classList.remove('hidden');
+        } else {
             hud = document.createElement('div');
             hud.id = 'survival-hud';
             hud.className = 'survival-hud';
             document.getElementById('freeroam-3d-hud')?.appendChild(hud);
         }
 
-        // Create warning display
+        // Ensure warning display exists
         let warning = document.getElementById('survival-warning');
         if (!warning) {
             warning = document.createElement('div');
@@ -2169,7 +2174,7 @@ class FNAFWorld {
             document.getElementById('freeroam-3d-hud')?.appendChild(warning);
         }
 
-        // Create audio cue display
+        // Ensure audio cue display exists
         let audioCue = document.getElementById('audio-cue');
         if (!audioCue) {
             audioCue = document.createElement('div');
@@ -2180,9 +2185,9 @@ class FNAFWorld {
     }
 
     removeSurvivalHUD() {
-        document.getElementById('survival-hud')?.remove();
-        document.getElementById('survival-warning')?.remove();
-        document.getElementById('audio-cue')?.remove();
+        document.getElementById('survival-hud')?.classList.add('hidden');
+        document.getElementById('survival-warning')?.classList.add('hidden');
+        document.getElementById('audio-cue')?.classList.add('hidden');
     }
 
     showWarning(message) {
@@ -2232,6 +2237,14 @@ class FNAFWorld {
             this.scene.remove(this.flashlight.target);
             this.flashlight = null;
             this.flashlightHelper = null;
+        }
+    }
+
+    toggleFreeRoamFlashlight() {
+        if (this.flashlight) {
+            this.disableFlashlight();
+        } else {
+            this.enableFlashlight();
         }
     }
 
@@ -2348,10 +2361,14 @@ class FNAFWorld {
 
     // Toggle hide (crouch behind furniture)
     toggleHide() {
+        if (!this.camera) return;
+
         this.isHiding = !this.isHiding;
         if (this.isHiding) {
             this.camera.position.y = 0.8; // Crouch
-            this.showWarning('🙈 Je verstopt je...');
+            if (this.survivalMode && this.survivalMode.isActive) {
+                this.showWarning('🙈 Je verstopt je...');
+            }
         } else {
             this.camera.position.y = this.playerHeight;
         }

@@ -1811,6 +1811,11 @@ body {
     color: #fff;
     font-family: 'Courier New', monospace;
     min-width: 150px;
+    z-index: 20;
+}
+
+.survival-hud.hidden {
+    display: none;
 }
 
 .survival-time {

@@ -3,6 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- CSP to allow PeerJS WebRTC functionality -->
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-eval' https://unpkg.com; style-src 'self' 'unsafe-inline'; connect-src 'self' wss: https:; img-src 'self' data: blob:;">
     <title>Vijf Nachten bij Freddy's - Browser Editie</title>
     <link rel="stylesheet" href="style.css">
     <!-- PeerJS voor online multiplayer -->
@@ -151,6 +153,11 @@
                     <h2 id="location-name-3d">🎭 Hoofdpodium</h2>
                     <div id="location-animatronics-3d"></div>
                 </div>
+
+                <!-- Survival Mode HUD -->
+                <div id="survival-hud" class="survival-hud hidden"></div>
+                <div id="survival-warning" class="survival-warning hidden"></div>
+                <div id="audio-cue" class="audio-cue hidden"></div>
 
                 <!-- Door proximity hint -->
                 <div id="door-hint-3d" class="door-hint"></div>
