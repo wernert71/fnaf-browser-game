@@ -946,9 +946,10 @@ class FNAFWorld {
             }
         });
 
-        // Toggle room lights intensity
-        const targetIntensity = this.lightsOn ? 1.0 : 0.05;
-        const ambientTarget = this.lightsOn ? 0.8 : 0.1;
+        // Toggle room lights intensity - MUCH brighter when on (daylight effect)
+        const targetIntensity = this.lightsOn ? 3.0 : 0.05;
+        const ambientTarget = this.lightsOn ? 2.5 : 0.1;
+        const hemiTarget = this.lightsOn ? 1.5 : 0.4;
 
         this.roomLights.forEach(light => {
             // Animate light transition
@@ -969,16 +970,29 @@ class FNAFWorld {
             animateLight();
         });
 
-        // Update ambient light and light fixtures
+        // Update ambient light, hemisphere light and light fixtures
         this.scene.children.forEach(child => {
             if (child instanceof THREE.AmbientLight) {
+                // Change to bright white color when lights on, dark blue when off
+                child.color.setHex(this.lightsOn ? 0xffffff : 0x334455);
                 child.intensity = ambientTarget;
+            }
+            if (child instanceof THREE.HemisphereLight) {
+                // Bright sky color when lights on
+                child.color.setHex(this.lightsOn ? 0xffffff : 0x8899aa);
+                child.groundColor.setHex(this.lightsOn ? 0xffffee : 0x222233);
+                child.intensity = hemiTarget;
             }
             // Update fixture visual appearance
             if (child.userData && child.userData.isLightFixture) {
                 child.material.color.setHex(this.lightsOn ? 0xffffaa : 0x333333);
             }
         });
+
+        // Adjust renderer exposure for daylight effect
+        if (this.renderer) {
+            this.renderer.toneMappingExposure = this.lightsOn ? 2.0 : 1.2;
+        }
 
         // Show feedback message
         this.showLightSwitchHint(this.lightsOn ? '💡 Lichten AAN' : '🌑 Lichten UIT');
