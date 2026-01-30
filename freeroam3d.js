@@ -306,15 +306,15 @@ class FNAFWorld {
         this.renderer.shadowMap.enabled = true;
         this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
         this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
-        this.renderer.toneMappingExposure = 1.2; // Brighter exposure
+        this.renderer.toneMappingExposure = 2.0; // Bright daylight exposure
         container.appendChild(this.renderer.domElement);
 
-        // Ambient light (brighter for better visibility)
-        const ambient = new THREE.AmbientLight(0x334455, 0.8);
+        // Ambient light - bright white for daylight (lightsOn defaults to true)
+        const ambient = new THREE.AmbientLight(0xffffff, 2.5);
         this.scene.add(ambient);
 
-        // Global hemisphere light for outdoor feel
-        const hemi = new THREE.HemisphereLight(0x8899aa, 0x222233, 0.4);
+        // Global hemisphere light - bright for daylight feel
+        const hemi = new THREE.HemisphereLight(0xffffff, 0xffffee, 1.5);
         this.scene.add(hemi);
 
         // Build initial room
@@ -717,8 +717,8 @@ class FNAFWorld {
         const width = data.size.width;
         const depth = data.size.depth;
 
-        // Main ceiling light (BRIGHTER)
-        const mainLight = new THREE.PointLight(0xffeedd, 1.2, 25);
+        // Main ceiling light (BRIGHT - daylight default)
+        const mainLight = new THREE.PointLight(0xffeedd, 3.6, 25); // 1.2 * 3.0 for daylight
         mainLight.position.set(0, height - 0.5, 0);
         mainLight.castShadow = true;
         mainLight.shadow.mapSize.width = 512;
@@ -733,7 +733,7 @@ class FNAFWorld {
         const numLightsZ = Math.ceil(depth / 8);
         for (let i = 0; i < numLightsX; i++) {
             for (let j = 0; j < numLightsZ; j++) {
-                const extraLight = new THREE.PointLight(0xffffee, 0.6, 12);
+                const extraLight = new THREE.PointLight(0xffffee, 1.8, 12); // 0.6 * 3.0 for daylight
                 extraLight.position.set(
                     -width / 2 + (i + 0.5) * (width / numLightsX),
                     height - 0.8,
