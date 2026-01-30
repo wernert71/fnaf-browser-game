@@ -13,7 +13,8 @@ const gameState = {
     rightDoorClosed: false,
     leftLightOn: false,
     rightLightOn: false,
-    gameOver: false
+    gameOver: false,
+    officePosition: 'center' // 'left', 'center', 'right'
 };
 
 // Animatronics
@@ -71,6 +72,7 @@ const elements = {
     gameoverScreen: document.getElementById('gameover-screen'),
     victoryScreen: document.getElementById('victory-screen'),
     officeView: document.getElementById('office-view'),
+    officeBg: document.getElementById('office-bg'),
     cameraView: document.getElementById('camera-view'),
     timeDisplay: document.getElementById('time-display'),
     nightDisplay: document.getElementById('night-display'),
@@ -82,6 +84,9 @@ const elements = {
     jumpscareAnimatronic: document.getElementById('jumpscare-animatronic'),
     leftDoor: document.getElementById('left-door'),
     rightDoor: document.getElementById('right-door'),
+    leftDoorArea: document.getElementById('left-door-area'),
+    rightDoorArea: document.getElementById('right-door-area'),
+    centerArea: document.getElementById('center-area'),
     leftWindow: document.getElementById('left-window'),
     rightWindow: document.getElementById('right-window'),
     leftAnimatronic: document.getElementById('left-animatronic'),
@@ -240,6 +245,7 @@ function startGame() {
     gameState.rightLightOn = false;
     gameState.gameOver = false;
     gameState.currentCamera = '1A';
+    gameState.officePosition = 'center';
 
     resetAnimatronics();
     setAILevels();
@@ -257,6 +263,7 @@ function startGame() {
     updateUI();
     updateDoors();
     updateLights();
+    updateOfficeView();
 
     // Start game loops
     startGameLoops();
@@ -274,10 +281,10 @@ function startGameLoops() {
         }
     }, 90000); // 90 seconds per hour
 
-    // Power drain
+    // Power drain (slower - designed to last ~9 minutes with base usage)
     powerInterval = setInterval(() => {
         if (gameState.power > 0) {
-            gameState.power -= gameState.powerUsage * 0.1;
+            gameState.power -= gameState.powerUsage * 0.018;
             if (gameState.power <= 0) {
                 gameState.power = 0;
                 powerOut();
@@ -662,6 +669,31 @@ function nextNight() {
     startGame();
 }
 
+// Office panning - look left, center, or right
+function lookLeft() {
+    if (gameState.cameraOpen || !gameState.isPlaying) return;
+    gameState.officePosition = 'left';
+    updateOfficeView();
+}
+
+function lookRight() {
+    if (gameState.cameraOpen || !gameState.isPlaying) return;
+    gameState.officePosition = 'right';
+    updateOfficeView();
+}
+
+function lookCenter() {
+    if (gameState.cameraOpen || !gameState.isPlaying) return;
+    gameState.officePosition = 'center';
+    updateOfficeView();
+}
+
+function updateOfficeView() {
+    // Remove all position classes
+    elements.officeBg.classList.remove('look-left', 'look-center', 'look-right');
+    elements.officeBg.classList.add(`look-${gameState.officePosition}`);
+}
+
 // Event Listeners
 startBtn.addEventListener('click', startGame);
 retryBtn.addEventListener('click', startGame);
@@ -686,17 +718,51 @@ document.addEventListener('keydown', (e) => {
             break;
         case 'a':
         case 'arrowleft':
-            toggleLeftDoor();
+            // Look left in office, or switch cameras if camera is open
+            if (!gameState.cameraOpen) {
+                lookLeft();
+            }
             break;
         case 'd':
         case 'arrowright':
-            toggleRightDoor();
+            // Look right in office
+            if (!gameState.cameraOpen) {
+                lookRight();
+            }
+            break;
+        case 'w':
+        case 'arrowup':
+            // Look center
+            if (!gameState.cameraOpen) {
+                lookCenter();
+            }
+            break;
+        case 's':
+        case 'arrowdown':
+            // Look center
+            if (!gameState.cameraOpen) {
+                lookCenter();
+            }
             break;
         case 'q':
-            toggleLeftLight();
+            // Toggle left door (when looking left)
+            if (gameState.officePosition === 'left') {
+                toggleLeftDoor();
+            }
             break;
         case 'e':
-            toggleRightLight();
+            // Toggle right door (when looking right)
+            if (gameState.officePosition === 'right') {
+                toggleRightDoor();
+            }
+            break;
+        case 'f':
+            // Toggle light for current view
+            if (gameState.officePosition === 'left') {
+                toggleLeftLight();
+            } else if (gameState.officePosition === 'right') {
+                toggleRightLight();
+            }
             break;
         case '1':
             if (gameState.cameraOpen) switchCamera('1A');

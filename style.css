@@ -109,6 +109,65 @@ body {
     display: flex;
     justify-content: space-between;
     padding: 20px;
+    transition: transform 0.3s ease-out;
+}
+
+/* Office panning - look positions */
+#office-bg.look-center {
+    /* Show center with hints of doors on sides */
+}
+
+#office-bg.look-left #right-door-area,
+#office-bg.look-left #center-area {
+    opacity: 0.2;
+    pointer-events: none;
+}
+
+#office-bg.look-left #left-door-area {
+    transform: scale(1.1);
+    z-index: 10;
+}
+
+#office-bg.look-right #left-door-area,
+#office-bg.look-right #center-area {
+    opacity: 0.2;
+    pointer-events: none;
+}
+
+#office-bg.look-right #right-door-area {
+    transform: scale(1.1);
+    z-index: 10;
+}
+
+#office-bg.look-center #left-door-area,
+#office-bg.look-center #right-door-area {
+    opacity: 0.6;
+}
+
+/* View indicator */
+#office-bg::before {
+    content: '← A/D →';
+    position: absolute;
+    bottom: 80px;
+    left: 50%;
+    transform: translateX(-50%);
+    color: #555;
+    font-size: 1rem;
+    z-index: 5;
+}
+
+#office-bg.look-left::before {
+    content: 'LEFT DOOR - Q:Door F:Light';
+    color: #ff6666;
+}
+
+#office-bg.look-right::before {
+    content: 'RIGHT DOOR - E:Door F:Light';
+    color: #ff6666;
+}
+
+#office-bg.look-center::before {
+    content: '← Look Left (A) | Look Right (D) →';
 }
 
 /* Door Areas */
@@ -119,6 +178,11 @@ body {
     align-items: center;
     gap: 10px;
     position: relative;
+    transition: opacity 0.3s, transform 0.3s;
+}
+
+#center-area {
+    transition: opacity 0.3s;
 }
 
 .door {
