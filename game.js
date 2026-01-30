@@ -797,6 +797,7 @@ document.querySelector('.cam-btn[data-cam="1A"]').classList.add('active');
 
 const freeRoamState = {
     active: false,
+    is3DMode: false, // Flag to distinguish between 2D and 3D modes
     currentLocation: 'stage'
 };
 
@@ -1080,6 +1081,7 @@ const freeRoamExit3D = document.getElementById('freeroam-exit-3d');
 // Start Free Roam Mode (3D)
 function startFreeRoam() {
     freeRoamState.active = true;
+    freeRoamState.is3DMode = true;
     freeRoamState.currentLocation = 'stage';
 
     elements.startScreen.classList.add('hidden');
@@ -1094,12 +1096,16 @@ function startFreeRoam() {
 // Exit Free Roam Mode
 function exitFreeRoam() {
     freeRoamState.active = false;
+    freeRoamState.is3DMode = false;
     freeRoamElements.screen.classList.add('hidden');
     elements.startScreen.classList.remove('hidden');
 
     // Stop 3D mode
     if (typeof stopFreeRoam3D === 'function') {
         stopFreeRoam3D();
+    }
+    if (typeof stopSurvivalMode3D === 'function') {
+        stopSurvivalMode3D();
     }
 }
 
@@ -1200,6 +1206,7 @@ const survivalBtn = document.getElementById('survival-btn');
 
 function startSurvival() {
     freeRoamState.active = true;
+    freeRoamState.is3DMode = true;
     freeRoamState.currentLocation = 'stage';
 
     elements.startScreen.classList.add('hidden');
@@ -1208,6 +1215,8 @@ function startSurvival() {
     // Start 3D survival mode
     if (typeof startSurvivalMode3D === 'function') {
         startSurvivalMode3D(1); // difficulty 1
+    } else {
+        console.error('startSurvivalMode3D not found!');
     }
 }
 
@@ -1215,10 +1224,19 @@ if (survivalBtn) {
     survivalBtn.addEventListener('click', startSurvival);
 }
 
-// Keyboard navigation for free roam
+// Keyboard navigation for free roam (only for 2D mode, 3D has its own handlers)
 document.addEventListener('keydown', (e) => {
     if (!freeRoamState.active) return;
 
+    // In 3D mode, only handle escape - 3D movement is in freeroam3d.js
+    if (freeRoamState.is3DMode) {
+        if (e.key.toLowerCase() === 'escape') {
+            exitFreeRoam();
+        }
+        return; // Let 3D engine handle other keys
+    }
+
+    // 2D mode navigation (legacy)
     const loc = locations[freeRoamState.currentLocation];
     const connections = loc.connections;
 
@@ -1442,12 +1460,20 @@ function initializePeer() {
     try {
         // Check if PeerJS is available
         if (typeof Peer === 'undefined') {
-            setConnectionStatus('PeerJS bibliotheek niet geladen!', 'error');
+            setConnectionStatus('PeerJS bibliotheek niet geladen! Probeer de pagina te verversen.', 'error');
+            console.error('PeerJS not loaded');
             return;
         }
 
+        console.log('Initializing PeerJS with code:', myCode);
         multiplayerState.peer = new Peer(myCode, {
-            debug: 1 // Show warnings
+            debug: 2, // Show warnings and errors
+            config: {
+                iceServers: [
+                    { urls: 'stun:stun.l.google.com:19302' },
+                    { urls: 'stun:stun1.l.google.com:19302' }
+                ]
+            }
         });
 
         multiplayerState.peer.on('open', (id) => {

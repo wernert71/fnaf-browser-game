@@ -359,16 +359,16 @@ class FNAFWorld {
                 this.tryToggleLightSwitch();
             }
 
-            // Survival mode controls
+            // Survival mode controls - C for hide, G for flashlight
             if (key === 'c') {
-                this.toggleHide(); // Crouch/hide
+                console.log('C key pressed - toggling hide');
+                this.toggleHide();
             }
             if (key === 'g') {
-                // Toggle flashlight
+                console.log('G key pressed - toggling flashlight');
                 if (this.survivalMode && this.survivalMode.isActive) {
                     this.survivalMode.toggleFlashlight();
                 } else {
-                    // Flashlight in free roam mode (unlimited battery)
                     this.toggleFreeRoamFlashlight();
                 }
             }
@@ -2361,16 +2361,24 @@ class FNAFWorld {
 
     // Toggle hide (crouch behind furniture)
     toggleHide() {
-        if (!this.camera) return;
+        console.log('toggleHide called, camera exists:', !!this.camera);
+        if (!this.camera) {
+            console.warn('Cannot toggle hide - camera not initialized');
+            return;
+        }
 
         this.isHiding = !this.isHiding;
+        console.log('isHiding now:', this.isHiding);
+
         if (this.isHiding) {
             this.camera.position.y = 0.8; // Crouch
             if (this.survivalMode && this.survivalMode.isActive) {
                 this.showWarning('🙈 Je verstopt je...');
             }
+            console.log('Player is now hiding (crouched)');
         } else {
             this.camera.position.y = this.playerHeight;
+            console.log('Player is now standing');
         }
     }
 }
@@ -2901,14 +2909,17 @@ function stopFreeRoam3D() {
 }
 
 function startSurvivalMode3D(difficulty = 1) {
+    console.log('startSurvivalMode3D called with difficulty:', difficulty);
     if (!fnafWorld) {
+        console.log('Creating new FNAFWorld instance');
         fnafWorld = new FNAFWorld();
     }
     fnafWorld.start();
     // Small delay to let scene initialize
     setTimeout(() => {
+        console.log('Starting survival mode in FNAFWorld');
         fnafWorld.startSurvivalMode(difficulty);
-    }, 100);
+    }, 500); // Increased delay for more reliable initialization
 }
 
 function stopSurvivalMode3D() {
