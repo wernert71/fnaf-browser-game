@@ -791,4 +791,225 @@ document.addEventListener('keydown', (e) => {
 // Initialize first camera button as active
 document.querySelector('.cam-btn[data-cam="1A"]').classList.add('active');
 
+// ==========================================
+// FREE ROAM MODE
+// ==========================================
+
+const freeRoamState = {
+    active: false,
+    currentLocation: 'stage'
+};
+
+// Location data with connections and descriptions
+const locations = {
+    stage: {
+        name: 'Show Stage',
+        emoji: '🎭',
+        description: 'The main stage where Freddy, Bonnie, and Chica perform for the children. Colorful curtains hang behind the animatronic band.',
+        animatronics: ['🐻 Freddy', '🐰 Bonnie', '🐤 Chica'],
+        connections: ['dining'],
+        color: '#4a1a4a'
+    },
+    dining: {
+        name: 'Dining Area',
+        emoji: '🍕',
+        description: 'Tables and chairs fill this large room. Pizza boxes and party hats are scattered around. The smell of old pizza lingers.',
+        animatronics: [],
+        connections: ['stage', 'westHall', 'eastHall', 'pirateCove'],
+        color: '#3a2a1a'
+    },
+    westHall: {
+        name: 'West Hall',
+        emoji: '🚪',
+        description: 'A dimly lit corridor leading to the security office. Children\'s drawings cover the walls. You hear distant footsteps...',
+        animatronics: [],
+        connections: ['dining', 'westCorner', 'supplyCloset'],
+        color: '#1a2a3a'
+    },
+    westCorner: {
+        name: 'West Hall Corner',
+        emoji: '📸',
+        description: 'The corner before the left door of the security office. A security camera watches from above. The light flickers.',
+        animatronics: [],
+        connections: ['westHall', 'office'],
+        color: '#1a1a2a'
+    },
+    eastHall: {
+        name: 'East Hall',
+        emoji: '🚪',
+        description: 'Another corridor with faded posters on the walls. "Celebrate!" they say. Something doesn\'t feel right here...',
+        animatronics: [],
+        connections: ['dining', 'eastCorner', 'restrooms'],
+        color: '#1a3a2a'
+    },
+    eastCorner: {
+        name: 'East Hall Corner',
+        emoji: '📸',
+        description: 'The corner before the right door. A motivational poster reads "Hang in there!" The irony isn\'t lost on you.',
+        animatronics: [],
+        connections: ['eastHall', 'office'],
+        color: '#2a1a2a'
+    },
+    pirateCove: {
+        name: 'Pirate Cove',
+        emoji: '🏴‍☠️',
+        description: 'A special stage with purple star-covered curtains. "Sorry! Out of Order" - Foxy lurks behind the curtain...',
+        animatronics: ['🦊 Foxy (behind curtain)'],
+        connections: ['dining'],
+        color: '#4a1a2a'
+    },
+    office: {
+        name: 'Security Office',
+        emoji: '🖥️',
+        description: 'Your workplace. Monitors, a desk fan, and security cameras. The doors on either side are your only protection.',
+        animatronics: [],
+        connections: ['westCorner', 'eastCorner'],
+        color: '#2a2a3a'
+    },
+    supplyCloset: {
+        name: 'Supply Closet',
+        emoji: '🧹',
+        description: 'A cramped closet full of cleaning supplies and spare parts. Is that... an endoskeleton in the corner?',
+        animatronics: ['🤖 Spare Endoskeleton'],
+        connections: ['westHall'],
+        color: '#1a1a1a'
+    },
+    restrooms: {
+        name: 'Restrooms',
+        emoji: '🚻',
+        description: 'Old, flickering lights illuminate dirty tiles. The mirrors are cracked. You hear dripping water...',
+        animatronics: [],
+        connections: ['eastHall'],
+        color: '#2a3a3a'
+    },
+    kitchen: {
+        name: 'Kitchen',
+        emoji: '🍳',
+        description: 'CAMERA DISABLED - Audio only. You hear pots clanging and something... moving. Best not to investigate.',
+        animatronics: ['❓ Unknown sounds'],
+        connections: ['dining'],
+        color: '#3a3a1a'
+    },
+    backstage: {
+        name: 'Backstage',
+        emoji: '🎪',
+        description: 'Spare heads line the shelves. Empty animatronic suits hang on the walls. Their eyes seem to follow you...',
+        animatronics: ['👤 Empty Suits', '🗣️ Spare Heads'],
+        connections: ['stage'],
+        color: '#2a1a3a'
+    }
+};
+
+// Add kitchen connection to dining
+locations.dining.connections.push('kitchen', 'backstage');
+// Add backstage connection to stage
+locations.stage.connections.push('backstage');
+
+// Free Roam DOM Elements
+const freeRoamElements = {
+    screen: document.getElementById('freeroam-screen'),
+    locationName: document.getElementById('location-name'),
+    locationDescription: document.getElementById('location-description'),
+    locationVisual: document.getElementById('location-visual'),
+    locationAnimatronics: document.getElementById('location-animatronics'),
+    navButtons: document.getElementById('nav-buttons'),
+    exitBtn: document.getElementById('freeroam-exit')
+};
+
+const freeRoamBtn = document.getElementById('freeroam-btn');
+
+// Start Free Roam Mode
+function startFreeRoam() {
+    freeRoamState.active = true;
+    freeRoamState.currentLocation = 'stage';
+
+    elements.startScreen.classList.add('hidden');
+    freeRoamElements.screen.classList.remove('hidden');
+
+    updateFreeRoamView();
+}
+
+// Exit Free Roam Mode
+function exitFreeRoam() {
+    freeRoamState.active = false;
+    freeRoamElements.screen.classList.add('hidden');
+    elements.startScreen.classList.remove('hidden');
+}
+
+// Move to a location
+function moveToLocation(locationId) {
+    if (locations[locationId]) {
+        freeRoamState.currentLocation = locationId;
+        updateFreeRoamView();
+        playSound('camera'); // Reuse camera sound for movement
+    }
+}
+
+// Update the free roam view
+function updateFreeRoamView() {
+    const loc = locations[freeRoamState.currentLocation];
+
+    // Update location info
+    freeRoamElements.locationName.textContent = `${loc.emoji} ${loc.name}`;
+    freeRoamElements.locationDescription.textContent = loc.description;
+
+    // Update visual
+    freeRoamElements.locationVisual.textContent = loc.emoji;
+    freeRoamElements.locationVisual.style.background = `radial-gradient(ellipse at center, ${loc.color} 0%, #000 100%)`;
+
+    // Update animatronics present
+    if (loc.animatronics.length > 0) {
+        freeRoamElements.locationAnimatronics.innerHTML =
+            '<p class="animatronics-label">Present here:</p>' +
+            loc.animatronics.map(a => `<span class="animatronic-tag">${a}</span>`).join('');
+    } else {
+        freeRoamElements.locationAnimatronics.innerHTML = '<p class="empty-room">The room appears empty...</p>';
+    }
+
+    // Update navigation buttons
+    freeRoamElements.navButtons.innerHTML = '';
+    loc.connections.forEach(connId => {
+        const connLoc = locations[connId];
+        const btn = document.createElement('button');
+        btn.className = 'nav-btn';
+        btn.textContent = `${connLoc.emoji} ${connLoc.name}`;
+        btn.onclick = () => moveToLocation(connId);
+        freeRoamElements.navButtons.appendChild(btn);
+    });
+}
+
+// Free Roam Event Listeners
+freeRoamBtn.addEventListener('click', startFreeRoam);
+freeRoamElements.exitBtn.addEventListener('click', exitFreeRoam);
+
+// Keyboard navigation for free roam
+document.addEventListener('keydown', (e) => {
+    if (!freeRoamState.active) return;
+
+    const loc = locations[freeRoamState.currentLocation];
+    const connections = loc.connections;
+
+    switch(e.key.toLowerCase()) {
+        case 'w':
+        case 'arrowup':
+            if (connections[0]) moveToLocation(connections[0]);
+            break;
+        case 's':
+        case 'arrowdown':
+            if (connections[1]) moveToLocation(connections[1]);
+            break;
+        case 'a':
+        case 'arrowleft':
+            if (connections[2]) moveToLocation(connections[2]);
+            break;
+        case 'd':
+        case 'arrowright':
+            if (connections[3]) moveToLocation(connections[3]);
+            break;
+        case 'escape':
+            exitFreeRoam();
+            break;
+    }
+});
+
 console.log('FNAF Browser Edition loaded! Press Start to play.');

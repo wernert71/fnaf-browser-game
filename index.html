@@ -12,7 +12,10 @@
         <div id="start-screen" class="screen">
             <h1>FIVE NIGHTS AT FREDDY'S</h1>
             <p class="subtitle">Browser Edition</p>
-            <button id="start-btn" class="game-btn">Start Night</button>
+            <div class="menu-buttons">
+                <button id="start-btn" class="game-btn">Start Night</button>
+                <button id="freeroam-btn" class="game-btn freeroam">🚶 Free Roam</button>
+            </div>
             <div class="instructions">
                 <p>Survive until 6 AM</p>
                 <p>A/D or ←/→ to look left/right</p>
@@ -97,6 +100,31 @@
         <!-- Jump Scare Screen -->
         <div id="jumpscare-screen" class="screen hidden">
             <div id="jumpscare-animatronic"></div>
+        </div>
+
+        <!-- Free Roam Screen -->
+        <div id="freeroam-screen" class="screen hidden">
+            <div id="freeroam-view">
+                <div id="freeroam-location">
+                    <div id="location-visual"></div>
+                    <h2 id="location-name">Show Stage</h2>
+                    <p id="location-description">The main stage where Freddy, Bonnie, and Chica perform for the children.</p>
+                    <div id="location-animatronics"></div>
+                </div>
+
+                <div id="freeroam-nav">
+                    <p class="nav-label">Move to:</p>
+                    <div id="nav-buttons"></div>
+                </div>
+
+                <div id="freeroam-hud">
+                    <button id="freeroam-exit" class="game-btn small">← Back to Menu</button>
+                    <div id="freeroam-controls">
+                        <p>WASD or Arrow Keys to move</p>
+                        <p>Click locations to travel</p>
+                    </div>
+                </div>
+            </div>
         </div>
 
         <!-- Game Over Screen -->

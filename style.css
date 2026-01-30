@@ -702,6 +702,194 @@ body {
     50% { opacity: 0.05; }
 }
 
+/* ==========================================
+   FREE ROAM MODE
+   ========================================== */
+
+/* Menu buttons */
+.menu-buttons {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    align-items: center;
+}
+
+.game-btn.freeroam {
+    background: #1a3a1a;
+    border-color: #00ff00;
+}
+
+.game-btn.freeroam:hover {
+    background: #00aa00;
+    box-shadow: 0 0 20px #00ff00;
+}
+
+.game-btn.small {
+    padding: 10px 20px;
+    font-size: 1rem;
+}
+
+/* Free Roam Screen */
+#freeroam-screen {
+    background: linear-gradient(180deg, #0a0a0a 0%, #000 100%);
+}
+
+#freeroam-view {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    position: relative;
+}
+
+/* Location Display */
+#freeroam-location {
+    text-align: center;
+    max-width: 600px;
+}
+
+#location-visual {
+    width: 200px;
+    height: 200px;
+    margin: 0 auto 20px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 6rem;
+    border: 4px solid #333;
+    box-shadow:
+        0 0 30px rgba(0, 0, 0, 0.8),
+        inset 0 0 50px rgba(0, 0, 0, 0.5);
+    animation: locationPulse 3s ease-in-out infinite;
+}
+
+@keyframes locationPulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.02); }
+}
+
+#location-name {
+    color: #fff;
+    font-size: 2rem;
+    margin-bottom: 10px;
+    text-shadow: 0 0 20px rgba(255, 255, 255, 0.3);
+}
+
+#location-description {
+    color: #888;
+    font-size: 1rem;
+    line-height: 1.6;
+    margin-bottom: 20px;
+    font-style: italic;
+}
+
+#location-animatronics {
+    margin: 20px 0;
+    min-height: 60px;
+}
+
+.animatronics-label {
+    color: #ff6666;
+    font-size: 0.9rem;
+    margin-bottom: 10px;
+}
+
+.animatronic-tag {
+    display: inline-block;
+    background: #2a1a1a;
+    border: 1px solid #ff3333;
+    color: #ff6666;
+    padding: 5px 15px;
+    margin: 5px;
+    border-radius: 20px;
+    font-size: 0.9rem;
+    animation: tagGlow 2s ease-in-out infinite;
+}
+
+@keyframes tagGlow {
+    0%, 100% { box-shadow: 0 0 5px rgba(255, 0, 0, 0.3); }
+    50% { box-shadow: 0 0 15px rgba(255, 0, 0, 0.5); }
+}
+
+.empty-room {
+    color: #444;
+    font-style: italic;
+}
+
+/* Navigation */
+#freeroam-nav {
+    margin-top: 30px;
+    text-align: center;
+}
+
+.nav-label {
+    color: #666;
+    margin-bottom: 15px;
+    font-size: 0.9rem;
+}
+
+#nav-buttons {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 10px;
+    max-width: 500px;
+}
+
+.nav-btn {
+    padding: 12px 20px;
+    font-family: 'Courier New', monospace;
+    font-size: 1rem;
+    background: #1a1a2a;
+    color: #aaa;
+    border: 2px solid #444;
+    cursor: pointer;
+    transition: all 0.2s;
+    border-radius: 5px;
+}
+
+.nav-btn:hover {
+    background: #2a2a4a;
+    border-color: #00ff00;
+    color: #00ff00;
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(0, 255, 0, 0.2);
+}
+
+/* Free Roam HUD */
+#freeroam-hud {
+    position: absolute;
+    top: 20px;
+    left: 20px;
+    right: 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+}
+
+#freeroam-controls {
+    text-align: right;
+    color: #444;
+    font-size: 0.8rem;
+}
+
+#freeroam-controls p {
+    margin: 5px 0;
+}
+
+/* Map hint */
+#freeroam-view::after {
+    content: '🗺️ Explore Freddy Fazbear\'s Pizza';
+    position: absolute;
+    bottom: 20px;
+    color: #333;
+    font-size: 0.9rem;
+}
+
 /* Responsive */
 @media (max-width: 800px) {
     #start-screen h1 {
@@ -722,5 +910,20 @@ body {
 
     #animatronic-display {
         font-size: 6rem;
+    }
+
+    #location-visual {
+        width: 150px;
+        height: 150px;
+        font-size: 4rem;
+    }
+
+    #location-name {
+        font-size: 1.5rem;
+    }
+
+    .nav-btn {
+        padding: 10px 15px;
+        font-size: 0.9rem;
     }
 }
