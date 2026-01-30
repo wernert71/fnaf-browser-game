@@ -1778,3 +1778,488 @@ jumpscare = function(animatronic) {
 };
 
 console.log('FNAF Browser Edition + Multiplayer loaded! Druk op Start om te spelen.');
+
+// ==========================================
+// FEATURE INTEGRATION - Progress, Achievements, Easy Mode
+// ==========================================
+
+// Progress Storage System
+const progressStorage = {
+    key: 'fnaf_progress',
+
+    getDefault() {
+        return {
+            highestNightCompleted: 0,
+            totalNightsSurvived: 0,
+            totalDeaths: 0,
+            totalPlaytimeSeconds: 0,
+            pizzaSlicesCollected: [],
+            photosTaken: 0,
+            easyModeEnabled: false,
+            achievements: [],
+            nightStars: {}, // { night: stars }
+            nightScores: {}, // { night: score }
+        };
+    },
+
+    load() {
+        try {
+            const data = localStorage.getItem(this.key);
+            return data ? { ...this.getDefault(), ...JSON.parse(data) } : this.getDefault();
+        } catch (e) {
+            console.error('Failed to load progress:', e);
+            return this.getDefault();
+        }
+    },
+
+    save(progress) {
+        try {
+            localStorage.setItem(this.key, JSON.stringify(progress));
+        } catch (e) {
+            console.error('Failed to save progress:', e);
+        }
+    },
+
+    update(updates) {
+        const progress = this.load();
+        Object.assign(progress, updates);
+        this.save(progress);
+        return progress;
+    }
+};
+
+// Game progress state
+let playerProgress = progressStorage.load();
+let sessionStartTime = null;
+let cameraUsedInSession = false;
+
+// Easy Mode State
+const easyModeState = {
+    enabled: false,
+    aiMultiplier: 0.6,
+    powerDrainMultiplier: 0.7,
+    hourDurationMultiplier: 1.2,
+    jumpscareEnabled: false
+};
+
+// Achievement Definitions
+const achievementDefs = [
+    { id: 'survive_night_1', name: 'Eerste Nacht', desc: 'Overleef Nacht 1', icon: '🌙', points: 10 },
+    { id: 'survive_night_2', name: 'Tweede Nacht', desc: 'Overleef Nacht 2', icon: '🌙', points: 15 },
+    { id: 'survive_night_3', name: 'Derde Nacht', desc: 'Overleef Nacht 3', icon: '🌙', points: 20 },
+    { id: 'survive_night_4', name: 'Vierde Nacht', desc: 'Overleef Nacht 4', icon: '🌙', points: 30 },
+    { id: 'survive_night_5', name: 'Veteraan', desc: 'Overleef Nacht 5', icon: '⭐', points: 50 },
+    { id: 'survive_night_6', name: 'Nachtmerrie', desc: 'Overleef Nacht 6', icon: '💀', points: 75 },
+    { id: 'survive_night_7', name: 'Aangepaste Meester', desc: 'Overleef Nacht 7', icon: '🎮', points: 100 },
+    { id: 'power_saver', name: 'Energie Bespaarder', desc: 'Eindig met 50%+ stroom', icon: '🔋', points: 20 },
+    { id: 'no_cameras', name: 'Blind Spelen', desc: 'Win zonder camera\'s', icon: '📵', points: 40 },
+    { id: 'speed_demon', name: 'Snelheidsduivel', desc: 'Win onder 5 minuten', icon: '⚡', points: 35 },
+    { id: 'all_nights', name: 'Meester Bewaker', desc: 'Voltooi alle 5 nachten', icon: '🏆', points: 100 },
+];
+
+// UI Element References
+const featureElements = {
+    easyModeCheckbox: document.getElementById('easy-mode-checkbox'),
+    achievementCount: document.getElementById('achievement-count'),
+    pizzaCount: document.getElementById('pizza-count'),
+    highestNight: document.getElementById('highest-night'),
+    achievementsBtn: document.getElementById('achievements-btn'),
+    nightSelectBtn: document.getElementById('night-select-btn'),
+    achievementsScreen: document.getElementById('achievements-screen'),
+    nightSelectScreen: document.getElementById('night-select-screen'),
+    achievementGrid: document.getElementById('achievement-grid'),
+    nightGrid: document.getElementById('night-grid'),
+    victoryStars: document.getElementById('victory-stars'),
+    ratingMessage: document.getElementById('rating-message'),
+    victoryScore: document.getElementById('victory-score'),
+    victoryAchievement: document.getElementById('victory-achievement'),
+    menuBtn: document.getElementById('menu-btn'),
+    achievementsBack: document.getElementById('achievements-back'),
+    nightSelectBack: document.getElementById('night-select-back'),
+    achievementNotification: document.getElementById('achievement-notification'),
+};
+
+// Calculate Star Rating
+function calculateStarRating(finalPower, timeSeconds, nightNum, usedCameras) {
+    let stars = 1; // Base star for survival
+
+    // Power efficiency
+    if (finalPower >= 50) stars += 2;
+    else if (finalPower >= 25) stars += 1;
+
+    // Speed bonus (harder on higher nights, so more lenient time)
+    const timeBonus = 420 + (nightNum * 30); // Extra 30s per night
+    if (timeSeconds <= timeBonus) stars += 1;
+
+    // No camera bonus
+    if (!usedCameras) stars += 1;
+
+    return Math.min(5, stars);
+}
+
+// Calculate Score
+function calculateScore(night, finalPower, stars, easyMode) {
+    let score = night * 1000;
+    score += finalPower * 10;
+    score += stars * 100;
+
+    // Difficulty multiplier
+    score *= (1 + (night - 1) * 0.1);
+
+    // Easy mode penalty
+    if (easyMode) score *= 0.5;
+
+    return Math.floor(score);
+}
+
+// Show Achievement Notification
+function showAchievementNotification(achievement) {
+    const notif = featureElements.achievementNotification;
+    if (!notif) return;
+
+    notif.querySelector('.achievement-icon').textContent = achievement.icon;
+    notif.querySelector('.achievement-name').textContent = achievement.name;
+    notif.querySelector('.achievement-points').textContent = `+${achievement.points} punten`;
+
+    notif.classList.remove('hidden');
+    notif.classList.add('show');
+
+    setTimeout(() => {
+        notif.classList.remove('show');
+        setTimeout(() => notif.classList.add('hidden'), 500);
+    }, 4000);
+}
+
+// Try to unlock achievement
+function tryUnlockAchievement(achievementId) {
+    if (playerProgress.achievements.includes(achievementId)) return false;
+
+    const achievement = achievementDefs.find(a => a.id === achievementId);
+    if (!achievement) return false;
+
+    playerProgress.achievements.push(achievementId);
+    progressStorage.save(playerProgress);
+
+    showAchievementNotification(achievement);
+    updateProgressDisplay();
+
+    return true;
+}
+
+// Update Progress Display
+function updateProgressDisplay() {
+    if (featureElements.achievementCount) {
+        featureElements.achievementCount.textContent = playerProgress.achievements.length;
+    }
+    if (featureElements.pizzaCount) {
+        featureElements.pizzaCount.textContent = playerProgress.pizzaSlicesCollected.length;
+    }
+    if (featureElements.highestNight) {
+        featureElements.highestNight.textContent = Math.max(1, playerProgress.highestNightCompleted);
+    }
+
+    // Show night select button if completed at least night 1
+    if (featureElements.nightSelectBtn && playerProgress.highestNightCompleted > 0) {
+        featureElements.nightSelectBtn.classList.remove('hidden');
+    }
+}
+
+// Render Achievements Grid
+function renderAchievementsGrid() {
+    if (!featureElements.achievementGrid) return;
+
+    const totalPoints = playerProgress.achievements.reduce((sum, id) => {
+        const ach = achievementDefs.find(a => a.id === id);
+        return sum + (ach ? ach.points : 0);
+    }, 0);
+
+    document.getElementById('total-points').textContent = totalPoints;
+    document.getElementById('unlocked-count').textContent = playerProgress.achievements.length;
+    document.getElementById('total-achievements').textContent = achievementDefs.length;
+
+    featureElements.achievementGrid.innerHTML = achievementDefs.map(ach => {
+        const unlocked = playerProgress.achievements.includes(ach.id);
+        return `
+            <div class="achievement-card ${unlocked ? 'unlocked' : ''}">
+                <div class="ach-icon">${ach.icon}</div>
+                <div class="ach-content">
+                    <div class="ach-name">${ach.name}</div>
+                    <div class="ach-desc">${ach.desc}</div>
+                    <div class="ach-points">${ach.points} punten</div>
+                </div>
+            </div>
+        `;
+    }).join('');
+}
+
+// Render Night Selection Grid
+function renderNightGrid() {
+    if (!featureElements.nightGrid) return;
+
+    const nights = [
+        { num: 1, name: 'Nacht 1' },
+        { num: 2, name: 'Nacht 2' },
+        { num: 3, name: 'Nacht 3' },
+        { num: 4, name: 'Nacht 4' },
+        { num: 5, name: 'Nacht 5' },
+        { num: 6, name: 'Nacht 6', special: true },
+        { num: 7, name: 'Custom', special: true },
+    ];
+
+    featureElements.nightGrid.innerHTML = nights.map(n => {
+        const unlocked = n.num <= playerProgress.highestNightCompleted + 1;
+        const completed = n.num <= playerProgress.highestNightCompleted;
+        const stars = playerProgress.nightStars[n.num] || 0;
+
+        return `
+            <button class="night-btn ${unlocked ? '' : 'locked'} ${completed ? 'completed' : ''} ${n.special ? 'special' : ''}"
+                    data-night="${n.num}" ${unlocked ? '' : 'disabled'}>
+                <span class="night-number">${n.num === 7 ? '?' : n.num}</span>
+                <span class="night-stars">${completed ? '⭐'.repeat(stars) + '☆'.repeat(5 - stars) : ''}</span>
+            </button>
+        `;
+    }).join('');
+
+    // Add click handlers
+    featureElements.nightGrid.querySelectorAll('.night-btn:not(.locked)').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const night = parseInt(btn.dataset.night);
+            if (night === 7) {
+                // Show custom night controls
+                document.getElementById('custom-night-container').classList.remove('hidden');
+            } else {
+                gameState.night = night;
+                featureElements.nightSelectScreen.classList.add('hidden');
+                elements.startScreen.classList.remove('hidden');
+            }
+        });
+    });
+}
+
+// Apply Easy Mode
+function applyEasyMode() {
+    if (!easyModeState.enabled) return;
+
+    // Reduce AI levels
+    Object.keys(animatronics).forEach(key => {
+        animatronics[key].aiLevel = Math.floor(animatronics[key].aiLevel * easyModeState.aiMultiplier);
+    });
+
+    console.log('Easy mode applied - AI levels reduced');
+}
+
+// Enhanced Victory Function
+const baseVictory = victory;
+victory = function() {
+    // Calculate session stats
+    const sessionTime = sessionStartTime ? Math.floor((Date.now() - sessionStartTime) / 1000) : 540;
+    const stars = calculateStarRating(gameState.power, sessionTime, gameState.night, cameraUsedInSession);
+    const score = calculateScore(gameState.night, gameState.power, stars, easyModeState.enabled);
+
+    // Update progress
+    playerProgress.totalNightsSurvived++;
+    if (gameState.night > playerProgress.highestNightCompleted) {
+        playerProgress.highestNightCompleted = gameState.night;
+    }
+    playerProgress.nightStars[gameState.night] = Math.max(stars, playerProgress.nightStars[gameState.night] || 0);
+    playerProgress.nightScores[gameState.night] = Math.max(score, playerProgress.nightScores[gameState.night] || 0);
+    playerProgress.totalPlaytimeSeconds += sessionTime;
+    progressStorage.save(playerProgress);
+
+    // Display star rating
+    if (featureElements.victoryStars) {
+        featureElements.victoryStars.textContent = '⭐'.repeat(stars) + '☆'.repeat(5 - stars);
+    }
+    if (featureElements.ratingMessage) {
+        const messages = ['', 'Overleefd!', 'Goed!', 'Geweldig!', 'Uitstekend!', 'Perfect!'];
+        featureElements.ratingMessage.textContent = messages[stars];
+    }
+    if (featureElements.victoryScore) {
+        featureElements.victoryScore.textContent = score.toLocaleString();
+    }
+
+    // Check achievements
+    tryUnlockAchievement(`survive_night_${gameState.night}`);
+    if (gameState.power >= 50) tryUnlockAchievement('power_saver');
+    if (!cameraUsedInSession) tryUnlockAchievement('no_cameras');
+    if (sessionTime < 300) tryUnlockAchievement('speed_demon');
+    if (playerProgress.highestNightCompleted >= 5) tryUnlockAchievement('all_nights');
+
+    // Show achievement on victory screen
+    const unlockedAch = achievementDefs.find(a =>
+        a.id === `survive_night_${gameState.night}` &&
+        !playerProgress.achievements.includes(a.id)
+    );
+
+    if (unlockedAch && featureElements.victoryAchievement) {
+        featureElements.victoryAchievement.innerHTML = `
+            <span class="ach-icon">${unlockedAch.icon}</span>
+            <span class="ach-name">${unlockedAch.name}</span>
+        `;
+        featureElements.victoryAchievement.classList.remove('hidden');
+    }
+
+    updateProgressDisplay();
+    baseVictory();
+};
+
+// Enhanced Game Over
+const baseJumpscare = jumpscare;
+jumpscare = function(animatronic) {
+    playerProgress.totalDeaths++;
+    if (sessionStartTime) {
+        playerProgress.totalPlaytimeSeconds += Math.floor((Date.now() - sessionStartTime) / 1000);
+    }
+    progressStorage.save(playerProgress);
+
+    if (easyModeState.enabled && !easyModeState.jumpscareEnabled) {
+        // Skip jumpscare animation in easy mode
+        gameState.isPlaying = false;
+        gameState.gameOver = true;
+        stopGameLoops();
+        elements.gameScreen.classList.add('hidden');
+        elements.gameoverScreen.classList.remove('hidden');
+        const msg = document.getElementById('gameover-message');
+        if (msg) msg.textContent = `${animatronic.emoji} ${animatronic.name} heeft je gevonden!`;
+        return;
+    }
+
+    baseJumpscare(animatronic);
+};
+
+// Enhanced Start Game
+const baseStartGame = startGame;
+startGame = function() {
+    sessionStartTime = Date.now();
+    cameraUsedInSession = false;
+    baseStartGame();
+    applyEasyMode();
+};
+
+// Track camera usage
+const baseToggleCamera = toggleCamera;
+toggleCamera = function() {
+    if (gameState.isPlaying && !gameState.cameraOpen) {
+        cameraUsedInSession = true;
+    }
+    baseToggleCamera();
+};
+
+// Event Listeners for new UI
+if (featureElements.easyModeCheckbox) {
+    // Load saved easy mode preference
+    featureElements.easyModeCheckbox.checked = playerProgress.easyModeEnabled;
+    easyModeState.enabled = playerProgress.easyModeEnabled;
+
+    featureElements.easyModeCheckbox.addEventListener('change', (e) => {
+        easyModeState.enabled = e.target.checked;
+        playerProgress.easyModeEnabled = e.target.checked;
+        progressStorage.save(playerProgress);
+        console.log('Easy mode:', easyModeState.enabled ? 'enabled' : 'disabled');
+    });
+}
+
+if (featureElements.achievementsBtn) {
+    featureElements.achievementsBtn.addEventListener('click', () => {
+        renderAchievementsGrid();
+        elements.startScreen.classList.add('hidden');
+        featureElements.achievementsScreen.classList.remove('hidden');
+    });
+}
+
+if (featureElements.achievementsBack) {
+    featureElements.achievementsBack.addEventListener('click', () => {
+        featureElements.achievementsScreen.classList.add('hidden');
+        elements.startScreen.classList.remove('hidden');
+    });
+}
+
+if (featureElements.nightSelectBtn) {
+    featureElements.nightSelectBtn.addEventListener('click', () => {
+        renderNightGrid();
+        elements.startScreen.classList.add('hidden');
+        featureElements.nightSelectScreen.classList.remove('hidden');
+    });
+}
+
+if (featureElements.nightSelectBack) {
+    featureElements.nightSelectBack.addEventListener('click', () => {
+        featureElements.nightSelectScreen.classList.add('hidden');
+        elements.startScreen.classList.remove('hidden');
+    });
+}
+
+if (featureElements.menuBtn) {
+    featureElements.menuBtn.addEventListener('click', () => {
+        elements.victoryScreen.classList.add('hidden');
+        elements.startScreen.classList.remove('hidden');
+    });
+}
+
+// Custom Night Sliders
+const customNightSliders = {
+    freddy: document.getElementById('freddy-slider'),
+    bonnie: document.getElementById('bonnie-slider'),
+    chica: document.getElementById('chica-slider'),
+    foxy: document.getElementById('foxy-slider')
+};
+
+Object.entries(customNightSliders).forEach(([key, slider]) => {
+    if (slider) {
+        const valueSpan = document.getElementById(`${key}-value`);
+        slider.addEventListener('input', () => {
+            if (valueSpan) valueSpan.textContent = slider.value;
+        });
+    }
+});
+
+// Preset buttons
+document.querySelectorAll('.preset-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+        const presets = {
+            easy: { freddy: 5, bonnie: 5, chica: 5, foxy: 5 },
+            normal: { freddy: 10, bonnie: 10, chica: 10, foxy: 10 },
+            hard: { freddy: 15, bonnie: 15, chica: 15, foxy: 15 },
+            '2020': { freddy: 20, bonnie: 20, chica: 20, foxy: 20 }
+        };
+
+        const preset = presets[btn.dataset.preset];
+        if (preset) {
+            Object.entries(preset).forEach(([key, value]) => {
+                if (customNightSliders[key]) {
+                    customNightSliders[key].value = value;
+                    const valueSpan = document.getElementById(`${key}-value`);
+                    if (valueSpan) valueSpan.textContent = value;
+                }
+            });
+        }
+    });
+});
+
+// Start custom night button
+const startCustomNightBtn = document.getElementById('start-custom-night');
+if (startCustomNightBtn) {
+    startCustomNightBtn.addEventListener('click', () => {
+        gameState.night = 7;
+        gameState.customDifficulty = {
+            freddy: parseInt(customNightSliders.freddy?.value || 10),
+            bonnie: parseInt(customNightSliders.bonnie?.value || 10),
+            chica: parseInt(customNightSliders.chica?.value || 10),
+            foxy: parseInt(customNightSliders.foxy?.value || 10)
+        };
+
+        featureElements.nightSelectScreen.classList.add('hidden');
+        startGame();
+
+        // Override AI levels for custom night
+        animatronics.freddy.aiLevel = gameState.customDifficulty.freddy;
+        animatronics.bonnie.aiLevel = gameState.customDifficulty.bonnie;
+        animatronics.chica.aiLevel = gameState.customDifficulty.chica;
+        animatronics.foxy.aiLevel = gameState.customDifficulty.foxy;
+    });
+}
+
+// Initialize progress display on load
+updateProgressDisplay();
+
+console.log('Features loaded: Easy Mode, Achievements, Star Rating, Night Selection');
