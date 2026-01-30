@@ -17,10 +17,10 @@ const gameState = {
     officePosition: 'center' // 'left', 'center', 'right'
 };
 
-// Animatronics
+// Animatronics (Animatronische figuren)
 const animatronics = {
     freddy: {
-        name: 'Freddy',
+        name: 'Freddy Fazbeer',
         emoji: '🐻',
         position: '1A',
         aiLevel: 0,
@@ -28,7 +28,7 @@ const animatronics = {
         moveInterval: null
     },
     bonnie: {
-        name: 'Bonnie',
+        name: 'Bonnie het Konijn',
         emoji: '🐰',
         position: '1A',
         aiLevel: 0,
@@ -36,7 +36,7 @@ const animatronics = {
         moveInterval: null
     },
     chica: {
-        name: 'Chica',
+        name: 'Chica de Kip',
         emoji: '🐤',
         position: '1A',
         aiLevel: 0,
@@ -44,24 +44,24 @@ const animatronics = {
         moveInterval: null
     },
     foxy: {
-        name: 'Foxy',
+        name: 'Foxy de Piraat',
         emoji: '🦊',
         position: '3',
         aiLevel: 0,
-        stage: 0, // 0-3, at 3 he runs
+        stage: 0, // 0-3, bij 3 rent hij
         moveInterval: null
     }
 };
 
-// Camera locations with descriptions
+// Camera locaties met beschrijvingen
 const cameras = {
-    '1A': { name: 'Show Stage', description: 'Main stage area' },
-    '1B': { name: 'Dining Area', description: 'Tables and chairs' },
-    '2A': { name: 'West Hall', description: 'Left corridor' },
-    '2B': { name: 'West Hall Corner', description: 'Near left door' },
-    '3': { name: 'Pirate Cove', description: 'Foxy\'s lair' },
-    '4A': { name: 'East Hall', description: 'Right corridor' },
-    '4B': { name: 'East Hall Corner', description: 'Near right door' }
+    '1A': { name: 'Podium', description: 'Hoofdpodium' },
+    '1B': { name: 'Eetzaal', description: 'Tafels en stoelen' },
+    '2A': { name: 'West Gang', description: 'Linker gang' },
+    '2B': { name: 'West Hoek', description: 'Bij linker deur' },
+    '3': { name: 'Piraten Hoek', description: 'Foxy\'s schuilplaats' },
+    '4A': { name: 'Oost Gang', description: 'Rechter gang' },
+    '4B': { name: 'Oost Hoek', description: 'Bij rechter deur' }
 };
 
 // DOM Elements
@@ -452,7 +452,7 @@ function jumpscare(animatronic) {
         elements.jumpscareScreen.classList.add('hidden');
         elements.gameoverScreen.classList.remove('hidden');
         document.getElementById('gameover-message').textContent =
-            `${animatronic.name} got you!`;
+            `${animatronic.name} heeft je gepakt! 💀`;
     }, 1500);
 }
 
@@ -538,9 +538,9 @@ function switchCamera(camId) {
 // Update camera view
 function updateCameraView() {
     const cam = cameras[gameState.currentCamera];
-    elements.cameraName.textContent = `CAM ${gameState.currentCamera} - ${cam.name.toUpperCase()}`;
+    elements.cameraName.textContent = `📹 CAM ${gameState.currentCamera} - ${cam.name.toUpperCase()}`;
 
-    // Find animatronics at this camera
+    // Zoek animatronics bij deze camera
     let display = '';
     Object.values(animatronics).forEach(a => {
         if (a.position === gameState.currentCamera) {
@@ -548,20 +548,20 @@ function updateCameraView() {
         }
     });
 
-    // Special display for Foxy at Pirate Cove
+    // Speciale weergave voor Foxy bij Piraten Hoek
     if (gameState.currentCamera === '3') {
         if (animatronics.foxy.stage === 0) {
-            display = '🏴‍☠️ (behind curtain)';
+            display = '🏴‍☠️ (achter gordijn)';
         } else if (animatronics.foxy.stage === 1) {
-            display = '🦊 (peeking)';
+            display = '🦊 (gluurt...)';
         } else if (animatronics.foxy.stage === 2) {
-            display = '🦊 (out of cove)';
+            display = '🦊 (buiten de hoek!)';
         } else if (animatronics.foxy.stage >= 3) {
-            display = '⚠️ EMPTY!';
+            display = '⚠️ LEEG! HIJ RENT!';
         }
     }
 
-    elements.animatronicDisplay.textContent = display || '(empty)';
+    elements.animatronicDisplay.textContent = display || '(leeg) 👻';
 }
 
 // Toggle doors
@@ -638,13 +638,13 @@ function updatePowerUsage() {
 function updateUI() {
     updateTimeDisplay();
     updatePowerDisplay();
-    elements.nightDisplay.textContent = `Night ${gameState.night}`;
+    elements.nightDisplay.textContent = `🌙 Nacht ${gameState.night}`;
 }
 
-// Update time display
+// Update time display - Nederlandse tijdweergave (00:00 - 06:00)
 function updateTimeDisplay() {
-    const hour = gameState.hour === 0 ? 12 : gameState.hour;
-    elements.timeDisplay.textContent = `${hour} AM`;
+    const timeStr = `0${gameState.hour}:00`.slice(-5);
+    elements.timeDisplay.textContent = timeStr === '00:00' ? '00:00 🌙' : timeStr;
 }
 
 // Update power display
@@ -800,101 +800,101 @@ const freeRoamState = {
     currentLocation: 'stage'
 };
 
-// Location data with connections and descriptions
+// Locatie data met verbindingen en beschrijvingen (Nederlands)
 const locations = {
     stage: {
-        name: 'Show Stage',
+        name: 'Hoofdpodium',
         emoji: '🎭',
-        description: 'The main stage where Freddy, Bonnie, and Chica perform for the children. Colorful curtains hang behind the animatronic band.',
-        animatronics: ['🐻 Freddy', '🐰 Bonnie', '🐤 Chica'],
+        description: 'Het hoofdpodium waar Freddy, Bonnie en Chica optreden voor de kinderen. Kleurrijke gordijnen hangen achter de animatronische band. 🎤🎸🎹',
+        animatronics: ['🐻 Freddy Fazbeer', '🐰 Bonnie het Konijn', '🐤 Chica de Kip'],
         connections: ['dining'],
         color: '#4a1a4a'
     },
     dining: {
-        name: 'Dining Area',
+        name: 'Eetzaal',
         emoji: '🍕',
-        description: 'Tables and chairs fill this large room. Pizza boxes and party hats are scattered around. The smell of old pizza lingers.',
+        description: 'Tafels en stoelen vullen deze grote ruimte. Pizzadozen en feesthoedjes liggen overal verspreid. De geur van oude pizza hangt in de lucht... 🎈🎂',
         animatronics: [],
         connections: ['stage', 'westHall', 'eastHall', 'pirateCove'],
         color: '#3a2a1a'
     },
     westHall: {
-        name: 'West Hall',
+        name: 'West Gang',
         emoji: '🚪',
-        description: 'A dimly lit corridor leading to the security office. Children\'s drawings cover the walls. You hear distant footsteps...',
+        description: 'Een schemerige gang die naar het beveiligingskantoor leidt. Kindertekeningen bedekken de muren. Je hoort voetstappen in de verte... 👣',
         animatronics: [],
         connections: ['dining', 'westCorner', 'supplyCloset'],
         color: '#1a2a3a'
     },
     westCorner: {
-        name: 'West Hall Corner',
+        name: 'West Hoek',
         emoji: '📸',
-        description: 'The corner before the left door of the security office. A security camera watches from above. The light flickers.',
+        description: 'De hoek voor de linker deur van het beveiligingskantoor. Een beveiligingscamera kijkt van bovenaf mee. Het licht flikkert... 💡',
         animatronics: [],
         connections: ['westHall', 'office'],
         color: '#1a1a2a'
     },
     eastHall: {
-        name: 'East Hall',
+        name: 'Oost Gang',
         emoji: '🚪',
-        description: 'Another corridor with faded posters on the walls. "Celebrate!" they say. Something doesn\'t feel right here...',
+        description: 'Nog een gang met vervaagde posters aan de muren. "Vier feest!" staat erop. Er klopt iets niet hier... 🎪',
         animatronics: [],
         connections: ['dining', 'eastCorner', 'restrooms'],
         color: '#1a3a2a'
     },
     eastCorner: {
-        name: 'East Hall Corner',
+        name: 'Oost Hoek',
         emoji: '📸',
-        description: 'The corner before the right door. A motivational poster reads "Hang in there!" The irony isn\'t lost on you.',
+        description: 'De hoek voor de rechter deur. Een motivatieposter zegt "Hou vol!" De ironie ontgaat je niet... 😰',
         animatronics: [],
         connections: ['eastHall', 'office'],
         color: '#2a1a2a'
     },
     pirateCove: {
-        name: 'Pirate Cove',
+        name: 'Piraten Hoek',
         emoji: '🏴‍☠️',
-        description: 'A special stage with purple star-covered curtains. "Sorry! Out of Order" - Foxy lurks behind the curtain...',
-        animatronics: ['🦊 Foxy (behind curtain)'],
+        description: 'Een speciaal podium met paarse gordijnen met sterren. "Sorry! Buiten Gebruik" - Foxy loert achter het gordijn... ⚓🗡️',
+        animatronics: ['🦊 Foxy (achter gordijn)'],
         connections: ['dining'],
         color: '#4a1a2a'
     },
     office: {
-        name: 'Security Office',
+        name: 'Beveiligingskantoor',
         emoji: '🖥️',
-        description: 'Your workplace. Monitors, a desk fan, and security cameras. The doors on either side are your only protection.',
+        description: 'Jouw werkplek. Monitoren, een bureauventilator en beveiligingscamera\'s. De deuren aan beide kanten zijn je enige bescherming. 🔒',
         animatronics: [],
         connections: ['westCorner', 'eastCorner'],
         color: '#2a2a3a'
     },
     supplyCloset: {
-        name: 'Supply Closet',
+        name: 'Voorraadkast',
         emoji: '🧹',
-        description: 'A cramped closet full of cleaning supplies and spare parts. Is that... an endoskeleton in the corner?',
-        animatronics: ['🤖 Spare Endoskeleton'],
+        description: 'Een kleine kast vol schoonmaakspullen en reserveonderdelen. Is dat... een endoskelet in de hoek? 🤖💀',
+        animatronics: ['🤖 Reserve Endoskelet'],
         connections: ['westHall'],
         color: '#1a1a1a'
     },
     restrooms: {
-        name: 'Restrooms',
+        name: 'Toiletten',
         emoji: '🚻',
-        description: 'Old, flickering lights illuminate dirty tiles. The mirrors are cracked. You hear dripping water...',
+        description: 'Oude, flikkerende lampen verlichten vieze tegels. De spiegels zijn gebarsten. Je hoort druppelend water... 💧',
         animatronics: [],
         connections: ['eastHall'],
         color: '#2a3a3a'
     },
     kitchen: {
-        name: 'Kitchen',
+        name: 'Keuken',
         emoji: '🍳',
-        description: 'CAMERA DISABLED - Audio only. You hear pots clanging and something... moving. Best not to investigate.',
-        animatronics: ['❓ Unknown sounds'],
+        description: 'CAMERA UITGESCHAKELD - Alleen audio. Je hoort pannen rammelen en iets... beweegt. Beter om niet te onderzoeken... 🔊❓',
+        animatronics: ['❓ Onbekende geluiden'],
         connections: ['dining'],
         color: '#3a3a1a'
     },
     backstage: {
         name: 'Backstage',
         emoji: '🎪',
-        description: 'Spare heads line the shelves. Empty animatronic suits hang on the walls. Their eyes seem to follow you...',
-        animatronics: ['👤 Empty Suits', '🗣️ Spare Heads'],
+        description: 'Reservehoofden liggen op de planken. Lege animatronische pakken hangen aan de muur. Hun ogen lijken je te volgen... 👁️👁️',
+        animatronics: ['👤 Lege Pakken', '🗣️ Reservehoofden'],
         connections: ['stage'],
         color: '#2a1a3a'
     }
@@ -957,13 +957,13 @@ function updateFreeRoamView() {
     freeRoamElements.locationVisual.textContent = loc.emoji;
     freeRoamElements.locationVisual.style.background = `radial-gradient(ellipse at center, ${loc.color} 0%, #000 100%)`;
 
-    // Update animatronics present
+    // Update aanwezige animatronics
     if (loc.animatronics.length > 0) {
         freeRoamElements.locationAnimatronics.innerHTML =
-            '<p class="animatronics-label">Present here:</p>' +
+            '<p class="animatronics-label">⚠️ Hier aanwezig:</p>' +
             loc.animatronics.map(a => `<span class="animatronic-tag">${a}</span>`).join('');
     } else {
-        freeRoamElements.locationAnimatronics.innerHTML = '<p class="empty-room">The room appears empty...</p>';
+        freeRoamElements.locationAnimatronics.innerHTML = '<p class="empty-room">De ruimte lijkt leeg... 👻</p>';
     }
 
     // Update navigation buttons

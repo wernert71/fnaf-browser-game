@@ -1,70 +1,101 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="nl">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Five Nights at Freddy's - Browser Edition</title>
+    <title>Vijf Nachten bij Freddy's - Browser Editie</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
     <div id="game-container">
-        <!-- Start Screen -->
+        <!-- Start Scherm -->
         <div id="start-screen" class="screen">
-            <h1>FIVE NIGHTS AT FREDDY'S</h1>
-            <p class="subtitle">Browser Edition</p>
+            <div class="title-art">
+                <pre class="ascii-art">
+    ███████╗███╗   ██╗ █████╗ ███████╗
+    ██╔════╝████╗  ██║██╔══██╗██╔════╝
+    █████╗  ██╔██╗ ██║███████║█████╗
+    ██╔══╝  ██║╚██╗██║██╔══██║██╔══╝
+    ██║     ██║ ╚████║██║  ██║██║
+    ╚═╝     ╚═╝  ╚═══╝╚═╝  ╚═╝╚═╝
+                </pre>
+            </div>
+            <h1>VIJF NACHTEN BIJ FREDDY'S</h1>
+            <p class="subtitle">🎪 Browser Editie 🎪</p>
+            <div class="animatronic-preview">
+                <span class="preview-char" title="Freddy Fazbeer">🐻</span>
+                <span class="preview-char" title="Bonnie het Konijn">🐰</span>
+                <span class="preview-char" title="Chica de Kip">🐤</span>
+                <span class="preview-char" title="Foxy de Piraat">🦊</span>
+            </div>
             <div class="menu-buttons">
-                <button id="start-btn" class="game-btn">Start Night</button>
-                <button id="freeroam-btn" class="game-btn freeroam">🚶 Free Roam</button>
+                <button id="start-btn" class="game-btn">🌙 Start Nacht</button>
+                <button id="freeroam-btn" class="game-btn freeroam">🚶 Vrij Rondlopen</button>
             </div>
             <div class="instructions">
-                <p>Survive until 6 AM</p>
-                <p>A/D or ←/→ to look left/right</p>
-                <p>Q/E to toggle doors, F for light</p>
-                <p>SPACE for cameras | Watch your power!</p>
+                <p>🕛 Overleef tot 6 uur 's ochtends</p>
+                <p>⬅️ A/D of pijltjes om links/rechts te kijken</p>
+                <p>🚪 Q/E voor deuren, F voor licht</p>
+                <p>📹 SPATIE voor camera's | ⚡ Let op je stroom!</p>
             </div>
         </div>
 
-        <!-- Main Game Screen -->
+        <!-- Hoofd Spel Scherm -->
         <div id="game-screen" class="screen hidden">
-            <!-- Office View -->
+            <!-- Kantoor Weergave -->
             <div id="office-view">
                 <div id="office-bg">
                     <div id="left-door-area">
-                        <div id="left-door" class="door"></div>
-                        <button id="left-door-btn" class="door-btn">LEFT DOOR</button>
-                        <button id="left-light-btn" class="light-btn">LIGHT</button>
+                        <div id="left-door" class="door">
+                            <div class="door-frame">🚪</div>
+                        </div>
+                        <button id="left-door-btn" class="door-btn">LINKER DEUR</button>
+                        <button id="left-light-btn" class="light-btn">💡 LICHT</button>
                         <div id="left-window" class="window"></div>
                     </div>
 
                     <div id="center-area">
                         <div id="desk">
                             <div id="fan"></div>
+                            <div class="desk-items">
+                                <span class="desk-item">📻</span>
+                                <span class="desk-item">☕</span>
+                                <span class="desk-item">📋</span>
+                            </div>
+                        </div>
+                        <div class="office-decor">
+                            <div class="poster">🎪</div>
+                            <div class="poster">🎂</div>
+                            <div class="poster">🎈</div>
                         </div>
                     </div>
 
                     <div id="right-door-area">
-                        <div id="right-door" class="door"></div>
-                        <button id="right-door-btn" class="door-btn">RIGHT DOOR</button>
-                        <button id="right-light-btn" class="light-btn">LIGHT</button>
+                        <div id="right-door" class="door">
+                            <div class="door-frame">🚪</div>
+                        </div>
+                        <button id="right-door-btn" class="door-btn">RECHTER DEUR</button>
+                        <button id="right-light-btn" class="light-btn">💡 LICHT</button>
                         <div id="right-window" class="window"></div>
                     </div>
                 </div>
 
-                <!-- Animatronic at door (jump scare zone) -->
+                <!-- Animatronic bij deur (jumpscare zone) -->
                 <div id="left-animatronic" class="door-animatronic hidden"></div>
                 <div id="right-animatronic" class="door-animatronic hidden"></div>
             </div>
 
-            <!-- Camera View -->
+            <!-- Camera Weergave -->
             <div id="camera-view" class="hidden">
                 <div id="camera-static"></div>
                 <div id="camera-feed">
-                    <div id="camera-name">CAM 1A - SHOW STAGE</div>
+                    <div id="camera-name">CAM 1A - PODIUM</div>
                     <div id="camera-content">
                         <div id="animatronic-display"></div>
                     </div>
                 </div>
                 <div id="camera-map">
+                    <div class="map-title">📍 LOCATIES</div>
                     <button class="cam-btn" data-cam="1A">1A</button>
                     <button class="cam-btn" data-cam="1B">1B</button>
                     <button class="cam-btn" data-cam="2A">2A</button>
@@ -77,68 +108,72 @@
 
             <!-- HUD -->
             <div id="hud">
-                <div id="time-display">12 AM</div>
-                <div id="night-display">Night 1</div>
+                <div id="time-display">00:00</div>
+                <div id="night-display">Nacht 1</div>
                 <div id="power-display">
-                    <span>Power: </span>
+                    <span>⚡ Stroom: </span>
                     <span id="power-value">100</span>%
                     <div id="power-bar">
                         <div id="power-fill"></div>
                     </div>
-                    <span>Usage: </span>
+                    <span>Verbruik: </span>
                     <span id="usage-bars">|</span>
                 </div>
             </div>
 
-            <!-- Camera Toggle Button -->
+            <!-- Camera Schakelaar -->
             <button id="camera-toggle">
                 <span id="camera-icon">📹</span>
-                <span>CAMERAS</span>
+                <span>CAMERA'S</span>
             </button>
         </div>
 
-        <!-- Jump Scare Screen -->
+        <!-- Jumpscare Scherm -->
         <div id="jumpscare-screen" class="screen hidden">
             <div id="jumpscare-animatronic"></div>
+            <div id="jumpscare-text">AAAAHHH!</div>
         </div>
 
-        <!-- Free Roam Screen -->
+        <!-- Vrij Rondlopen Scherm -->
         <div id="freeroam-screen" class="screen hidden">
             <div id="freeroam-view">
                 <div id="freeroam-location">
                     <div id="location-visual"></div>
-                    <h2 id="location-name">Show Stage</h2>
-                    <p id="location-description">The main stage where Freddy, Bonnie, and Chica perform for the children.</p>
+                    <h2 id="location-name">Podium</h2>
+                    <p id="location-description">Het hoofdpodium waar Freddy, Bonnie en Chica optreden voor de kinderen.</p>
                     <div id="location-animatronics"></div>
                 </div>
 
                 <div id="freeroam-nav">
-                    <p class="nav-label">Move to:</p>
+                    <p class="nav-label">🚶 Ga naar:</p>
                     <div id="nav-buttons"></div>
                 </div>
 
                 <div id="freeroam-hud">
-                    <button id="freeroam-exit" class="game-btn small">← Back to Menu</button>
+                    <button id="freeroam-exit" class="game-btn small">← Terug naar Menu</button>
                     <div id="freeroam-controls">
-                        <p>WASD or Arrow Keys to move</p>
-                        <p>Click locations to travel</p>
+                        <p>WASD of Pijltjestoetsen om te bewegen</p>
+                        <p>Klik op locaties om te reizen</p>
                     </div>
                 </div>
             </div>
         </div>
 
-        <!-- Game Over Screen -->
+        <!-- Game Over Scherm -->
         <div id="gameover-screen" class="screen hidden">
+            <div class="gameover-visual">💀</div>
             <h1>GAME OVER</h1>
             <p id="gameover-message"></p>
-            <button id="retry-btn" class="game-btn">Try Again</button>
+            <button id="retry-btn" class="game-btn">🔄 Opnieuw Proberen</button>
         </div>
 
-        <!-- Victory Screen -->
+        <!-- Overwinning Scherm -->
         <div id="victory-screen" class="screen hidden">
-            <h1>6 AM</h1>
-            <p class="victory-text">You survived the night!</p>
-            <button id="next-night-btn" class="game-btn">Next Night</button>
+            <div class="victory-visual">🌅</div>
+            <h1>06:00</h1>
+            <p class="victory-text">🎉 Je hebt de nacht overleefd! 🎉</p>
+            <div class="victory-stats" id="victory-stats"></div>
+            <button id="next-night-btn" class="game-btn">➡️ Volgende Nacht</button>
         </div>
     </div>
 
